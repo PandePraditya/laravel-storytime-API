@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\Story;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Storage;
@@ -10,34 +11,71 @@ use Illuminate\Support\Str;
 
 class StoryController extends Controller
 {
-    public function index()
+    public function index(Request $request)
     {
         try {
-            $stories = Story::with(['user', 'category'])
-                ->select('id', 'title', 'content', 'content_images', 'user_id', 'category_id')
-                ->get()
-                ->map(function ($story) {
-                    $userName = $story->user ? $story->user->name : 'Unknown User';
-                    $categoryName = $story->category ? $story->category->name : 'Uncategorized';
+            $query = Story::with(['user', 'category'])
+                ->select('id', 'title', 'content', 'content_images', 'user_id', 'category_id');
 
-                    $firstImage = is_array($story->content_images) && !empty($story->content_images)
-                        ? Storage::url($story->content_images[0])
-                        : null;
-
-                    return [
-                        'id' => (string) $story->id,
-                        'title' => $story->title,
-                        'preview_content' => Str::words($story->content, 50),
-                        'first_image' => $firstImage,
-                        'user' => $userName,
-                        'category' => $categoryName
-                    ];
+            // Search functionality
+            if ($request->has('search')) {
+                $searchTerm = $request->input('search');
+                $query->where(function (Builder $q) use ($searchTerm) {
+                    $q->where('title', 'like', "%{$searchTerm}%")
+                        ->orWhere('content', 'like', "%{$searchTerm}%")
+                        ->orWhereHas('user', function (Builder $userQuery) use ($searchTerm) {
+                            $userQuery->where('name', 'like', "%{$searchTerm}%");
+                        })
+                        ->orWhereHas('category', function (Builder $categoryQuery) use ($searchTerm) {
+                            $categoryQuery->where('name', 'like', "%{$searchTerm}%");
+                        });
                 });
+            }
+
+            // Filtering by category
+            if ($request->has('category')) {
+                $query->whereHas('category', function (Builder $q) use ($request) {
+                    $q->where('name', $request->input('category'));
+                });
+            }
+
+            // Sorting
+            $sortBy = $request->input('sort_by', 'created_at');
+            $sortOrder = $request->input('sort_order', 'desc');
+            $query->orderBy($sortBy, $sortOrder);
+
+            // Pagination
+            $perPage = $request->input('per_page', 10);
+            $stories = $query->paginate($perPage);
+
+            $formattedStories = $stories->map(function ($story) {
+                $userName = $story->user ? $story->user->name : 'Unknown User';
+                $categoryName = $story->category ? $story->category->name : 'Uncategorized';
+
+                $firstImage = is_array($story->content_images) && !empty($story->content_images)
+                    ? Storage::url($story->content_images[0])
+                    : null;
+
+                return [
+                    'id' => (string) $story->id,
+                    'title' => $story->title,
+                    'preview_content' => Str::words($story->content, 50),
+                    'first_image' => $firstImage,
+                    'user' => $userName,
+                    'category' => $categoryName
+                ];
+            });
 
             return response()->json([
-                'success' => true,
-                'data' => $stories
-            ], 201);
+                'code' => 200,
+                'data' => $formattedStories,
+                'meta' => [
+                    'current_page' => $stories->currentPage(),
+                    'last_page' => $stories->lastPage(),
+                    'per_page' => $stories->perPage(),
+                    'total' => $stories->total()
+                ]
+            ], 200);
         } catch (\Exception $e) {
             Log::error('Story Index Error', [
                 'message' => $e->getMessage(),
@@ -45,7 +83,7 @@ class StoryController extends Controller
             ]);
 
             return response()->json([
-                'success' => false,
+                'code' => 500,
                 'message' => 'An error occurred while fetching stories',
                 'error' => $e->getMessage()
             ], 500);
