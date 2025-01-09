@@ -3,8 +3,8 @@
 namespace App\Http\Controllers;
 
 use App\Models\User;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Http\Request;
-// use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Validation\ValidationException;
 
@@ -122,6 +122,14 @@ class AuthController extends Controller
         try {
             // Get the token from the request
             $token = $request->bearerToken();
+
+            // Check if the token is provided
+            if (!$token) {
+                return response()->json([
+                    'code' => 400,
+                    'message' => 'Token not provided.',
+                ], 400);
+            }
 
             // Find the user associated with the token
             $user = User::whereHas('tokens', function ($query) use ($token) {

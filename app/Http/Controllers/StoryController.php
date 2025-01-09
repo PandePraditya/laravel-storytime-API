@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\Bookmark;
 use App\Models\Story;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Http\Request;
@@ -14,8 +15,10 @@ class StoryController extends Controller
     public function index(Request $request)
     {
         try {
+            $userId = auth('sanctum')->id(); // Get authenticated user's ID or null if not authenticated
+
             $query = Story::with(['user', 'category'])
-                ->select('id', 'title', 'content', 'content_images', 'user_id', 'category_id');
+                ->select('id', 'title', 'content', 'content_images', 'user_id', 'category_id', 'created_at');
 
             // Search functionality
             if ($request->has('search')) {
@@ -48,7 +51,7 @@ class StoryController extends Controller
             $perPage = $request->input('per_page', 10);
             $stories = $query->paginate($perPage);
 
-            $formattedStories = $stories->map(function ($story) {
+            $formattedStories = $stories->map(function ($story) use ($userId) {
                 $userName = $story->user ? $story->user->name : 'Unknown User';
                 $categoryName = $story->category ? $story->category->name : 'Uncategorized';
 
@@ -56,13 +59,19 @@ class StoryController extends Controller
                     ? Storage::url($story->content_images[0])
                     : null;
 
+                $isBookmarked = $userId
+                    ? Bookmark::where('story_id', $story->id)->where('user_id', $userId)->exists()
+                    : false;
+
                 return [
                     'id' => (string) $story->id,
                     'title' => $story->title,
                     'preview_content' => Str::words($story->content, 50),
                     'first_image' => $firstImage,
                     'user' => $userName,
-                    'category' => $categoryName
+                    'category' => $categoryName,
+                    'bookmarked' => $isBookmarked, // Include bookmark status
+                    'created_at' => $story->created_at ? $story->created_at->format('Y-m-d') : null,
                 ];
             });
 
@@ -119,7 +128,7 @@ class StoryController extends Controller
             ]);
 
             return response()->json([
-                'success' => true,
+                'code' => 201,
                 'message' => 'Story created successfully',
                 'data' => [
                     'id' => (string) $story->id, // Explicitly cast to string
@@ -130,7 +139,7 @@ class StoryController extends Controller
             Log::error('Story Creation Error: ' . $e->getMessage());
 
             return response()->json([
-                'success' => false,
+                'code' => 500,
                 'message' => 'An error occurred while creating the story',
                 'error' => $e->getMessage()
             ], 500);
@@ -163,7 +172,7 @@ class StoryController extends Controller
             Log::error('Story Fetch Error: ' . $e->getMessage());
 
             return response()->json([
-                'success' => false,
+                'code' => 404,
                 'message' => 'Story not found or an error occurred',
                 'error' => $e->getMessage()
             ], 404);
@@ -208,7 +217,7 @@ class StoryController extends Controller
 
             // Return success response
             return response()->json([
-                'success' => true,
+                'code' => 200,
                 'message' => 'Story updated successfully',
                 'data' => [
                     'id' => (string)$story->id,
@@ -223,7 +232,7 @@ class StoryController extends Controller
             Log::error('Story Update Error: ' . $e->getMessage());
 
             return response()->json([
-                'success' => false,
+                'code' => 500,
                 'message' => 'An error occurred while updating the story',
                 'error' => $e->getMessage()
             ], 500);

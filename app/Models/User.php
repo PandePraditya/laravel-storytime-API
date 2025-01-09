@@ -46,11 +46,18 @@ class User extends Authenticatable
         'password' => 'hashed',
     ];
 
-    public function stories() {
+    public function stories()
+    {
         return $this->hasMany(Story::class);
     }
 
-    public function bookmarks() {
+    public function bookmarks()
+    {
         return $this->hasMany(Bookmark::class);
+    }
+
+    public function bookmarkedStories()
+    {
+        return $this->belongsToMany(Story::class, 'bookmarks', 'user_id', 'story_id');
     }
 }

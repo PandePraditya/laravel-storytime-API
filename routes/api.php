@@ -1,10 +1,10 @@
 <?php
 
 use App\Http\Controllers\AuthController;
+use App\Http\Controllers\BookmarkController;
 use App\Http\Controllers\CategoryController;
 use App\Http\Controllers\StoryController;
 use App\Http\Controllers\UserController;
-use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 
 /*
@@ -26,6 +26,11 @@ use Illuminate\Support\Facades\Route;
 Route::post('/register', [AuthController::class, 'register']);
 Route::post('/login', [AuthController::class, 'login']);
 
+// Public routes (accessible without authentication)
+Route::get('/stories', [StoryController::class, 'index']); // Public access to view stories
+Route::get('/stories/{id}', [StoryController::class, 'show']);
+Route::get('/categories', [CategoryController::class, 'index']); // Public access to categories
+
 // Protected routes (requires authentication)
 Route::middleware('auth:sanctum')->group(function () {
     Route::post('/logout', [AuthController::class, 'logout']);
@@ -36,9 +41,11 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::post('/user/update-profile-image', [UserController::class, 'updateProfileImage']);
 
     // API routes for Stories
-    Route::apiResource('/stories', StoryController::class);
+    Route::apiResource('/stories', StoryController::class)->except(['index', 'show']); // Exclude Index and Show
+    // Custom Story routes
     Route::delete('/stories/{id}/remove-image', [StoryController::class, 'removeImage']);
-});
 
-// API routes for category fetching 
-Route::get('/categories', [CategoryController::class, 'index']);
+    // API routes for Bookmarks
+    Route::post('/bookmarks/toggle', [BookmarkController::class, 'toggle']);
+    Route::get('/bookmarks', [BookmarkController::class, 'index']);
+});
