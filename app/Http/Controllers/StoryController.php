@@ -158,16 +158,17 @@ class StoryController extends Controller
                 });
 
             return response()->json([
-                'success' => true,
+                'code' => 200,
                 'data' => [
                     'id' => (string) $story->id,
                     'title' => $story->title,
                     'content' => $story->content,
                     'content_images' => $imageUrls,
                     'user' => $story->user->name ?? 'Unknown User',
-                    'category' => $story->category->name ?? 'Uncategorized'
+                    'category' => $story->category->name ?? 'Uncategorized',
+                    'created_at' => $story->created_at ? $story->created_at->format('Y-m-d') : null,
                 ]
-            ], 201);
+            ], 200);
         } catch (\Exception $e) {
             Log::error('Story Fetch Error: ' . $e->getMessage());
 

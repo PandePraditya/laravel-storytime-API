@@ -11,16 +11,15 @@ class CategorySeeder extends Seeder
     public function run(): void
     {
         $categories = [
-            ['name' => 'Technology', 'slug' => Str::slug('Technology')],
-            ['name' => 'Travel', 'slug' => Str::slug('Travel')],
-            ['name' => 'Food & Cooking', 'slug' => Str::slug('Food & Cooking')],
-            ['name' => 'Lifestyle', 'slug' => Str::slug('Lifestyle')],
-            ['name' => 'Science', 'slug' => Str::slug('Science')],
-            ['name' => 'Art & Culture', 'slug' => Str::slug('Art & Culture')],
-            ['name' => 'Sports', 'slug' => Str::slug('Sports')],
-            ['name' => 'Entertainment', 'slug' => Str::slug('Entertainment')],
-            ['name' => 'Business & Finance', 'slug' => Str::slug('Business & Finance')],
-            ['name' => 'Personal Stories', 'slug' => Str::slug('Personal Stories')]
+            ['name' => 'Comedy', 'slug' => Str::slug('Comedy')],
+            ['name' => 'Romance', 'slug' => Str::slug('Romance')],
+            ['name' => 'Horror', 'slug' => Str::slug('Horror')],
+            ['name' => 'Adventure', 'slug' => Str::slug('Adventure')],
+            ['name' => 'Fiction', 'slug' => Str::slug('Fiction')],
+            ['name' => 'Fantasy', 'slug' => Str::slug('Fantasy')],
+            ['name' => 'Drama', 'slug' => Str::slug('Drama')],
+            ['name' => 'Heartfelt', 'slug' => Str::slug('Heartfelt')],
+            ['name' => 'Mystery', 'slug' => Str::slug('Mystery')]
         ];
 
         foreach ($categories as &$category) {
