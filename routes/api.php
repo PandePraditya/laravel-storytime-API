@@ -23,6 +23,10 @@ use Illuminate\Support\Facades\Route;
 // });
 
 // API routes for authentication
+Route::get('/health', function () {
+    return response()->json(['message' => 'Server is running.'], 200);
+});
+
 Route::post('/register', [AuthController::class, 'register']);
 Route::post('/login', [AuthController::class, 'login']);
 
