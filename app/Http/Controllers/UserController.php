@@ -27,7 +27,7 @@ class UserController extends Controller
                     'id' => $user->id,
                     'name' => $user->name,
                     'email' => $user->email,
-                    'profile_image' => $user->profile_image ? asset('storage/' . $user->profile_image) : null, // Return the profile image URL
+                    'profile_image' => $user->profile_image ? 'storage/' . $user->profile_image : null, // Return the profile image URL
                     'about' => $user->about,
                     'username' => $user->username,
                 ],
@@ -149,7 +149,7 @@ class UserController extends Controller
                     'message' => 'Profile image updated successfully.',
                     'user' => [
                         'id' => $user->id,
-                        'profile_image' => asset('storage/' . $user->profile_image), // Return full URL
+                        'profile_image' => 'storage/' . $user->profile_image, // Return full URL
                     ],
                 ], 201);
             }

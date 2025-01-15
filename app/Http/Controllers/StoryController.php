@@ -48,8 +48,9 @@ class StoryController extends Controller
             $query->orderBy($sortBy, $sortOrder);
 
             // Pagination
-            $perPage = $request->input('per_page', 10);
-            $stories = $query->paginate($perPage);
+            // $perPage = $request->input('per_page', 10);
+            // $stories = $query->paginate($perPage);
+            $stories = $query->get();
 
             $formattedStories = $stories->map(function ($story) use ($userId) {
                 $userName = $story->user ? $story->user->name : 'Unknown User';
@@ -78,12 +79,12 @@ class StoryController extends Controller
             return response()->json([
                 'code' => 200,
                 'data' => $formattedStories,
-                'meta' => [
-                    'current_page' => $stories->currentPage(),
-                    'last_page' => $stories->lastPage(),
-                    'per_page' => $stories->perPage(),
-                    'total' => $stories->total()
-                ]
+                // 'meta' => [
+                //     'current_page' => $stories->currentPage(),
+                //     'last_page' => $stories->lastPage(),
+                //     'per_page' => $stories->perPage(),
+                //     'total' => $stories->total()
+                // ]
             ], 200);
         } catch (\Exception $e) {
             Log::error('Story Index Error', [
