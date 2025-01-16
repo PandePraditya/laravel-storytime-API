@@ -149,7 +149,7 @@ class UserController extends Controller
                     'message' => 'Profile image updated successfully.',
                     'user' => [
                         'id' => $user->id,
-                        'profile_image' => 'storage/' . $user->profile_image, // Return full URL
+                        'profile_image' => asset('storage/' . $user->profile_image), // Return full URL
                     ],
                 ], 201);
             }

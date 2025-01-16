@@ -56,9 +56,16 @@ class StoryController extends Controller
                 $userName = $story->user ? $story->user->name : 'Unknown User';
                 $categoryName = $story->category ? $story->category->name : 'Uncategorized';
 
+                // Get the first image or set to null
                 $firstImage = is_array($story->content_images) && !empty($story->content_images)
                     ? Storage::url($story->content_images[0])
                     : null;
+                
+                // Transform image paths to full URLs
+                $firstImage = collect($story->content_images)
+                    ->map(function ($imagePath) {
+                        return Storage::url($imagePath);
+                    });
 
                 $isBookmarked = $userId
                     ? Bookmark::where('story_id', $story->id)->where('user_id', $userId)->exists()
@@ -116,7 +123,7 @@ class StoryController extends Controller
             if ($request->hasFile('content_images')) {
                 foreach ($request->file('content_images') as $image) {
                     $path = $image->store('story_images', 'public');
-                    $imagePaths[] = $path;
+                    $imagePaths[] = Storage::url($path);
                 }
             }
 
@@ -183,6 +190,7 @@ class StoryController extends Controller
 
     public function update(Request $request, string $id)
     {
+        // dd($request->file('content_images'));
         try {
             Log::info('Request Data: ', $request->all());
 
@@ -191,7 +199,7 @@ class StoryController extends Controller
                 'title' => 'sometimes|string|max:255',
                 'content' => 'sometimes|string',
                 'content_images' => 'sometimes|array',
-                'content_images.*' => 'image|mimes:jpeg,png,jpg,gif|max:2048',
+                'content_images.*' => 'image|mimes:jpeg,png,jpg,gif|max:2048', // '*' means validate each item in the array
                 'category_id' => 'sometimes|exists:categories,id'
             ]);
 
@@ -211,6 +219,8 @@ class StoryController extends Controller
                     $imagePaths[] = $path; // Append new images
                 }
             }
+            
+            // $this->file('content_images')->store('story_images', 'public');
 
             // Update the story with validated data
             $story->update(array_merge($validatedData, [
@@ -225,7 +235,10 @@ class StoryController extends Controller
                     'id' => (string)$story->id,
                     'title' => $story->title,
                     'content' => $story->content,
-                    'content_images' => $story->content_images,
+                    'content_images' => collect($story->content_images)
+                    ->map(function ($imagePath) {
+                        return Storage::url($imagePath);
+                    }),
                     'category_id' => $story->category_id,
                 ]
             ], 200);

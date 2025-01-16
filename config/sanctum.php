@@ -46,7 +46,8 @@ return [
     |
     */
 
-    'expiration' => null,
+    'expiration' => 7 * 24 * 60, // 7 days, it uses minutes
+    // 'expiration' => null,
 
     /*
     |--------------------------------------------------------------------------
