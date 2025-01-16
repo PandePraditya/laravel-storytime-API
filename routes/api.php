@@ -22,11 +22,12 @@ use Illuminate\Support\Facades\Route;
 //     return $request->user();
 // });
 
-// API routes for authentication
+// Health check route
 Route::get('/health', function () {
     return response()->json(['message' => 'Server is running.'], 200);
 });
 
+// API routes for authentication
 Route::post('/register', [AuthController::class, 'register']);
 Route::post('/login', [AuthController::class, 'login']);
 
