@@ -60,12 +60,6 @@ class StoryController extends Controller
                 $firstImage = is_array($story->content_images) && !empty($story->content_images)
                     ? Storage::url($story->content_images[0])
                     : null;
-                
-                // Transform image paths to full URLs
-                $firstImage = collect($story->content_images)
-                    ->map(function ($imagePath) {
-                        return Storage::url($imagePath);
-                    });
 
                 $isBookmarked = $userId
                     ? Bookmark::where('story_id', $story->id)->where('user_id', $userId)->exists()
@@ -75,7 +69,7 @@ class StoryController extends Controller
                     'id' => (string) $story->id,
                     'title' => $story->title,
                     'preview_content' => Str::words($story->content, 50),
-                    'first_image' => $firstImage,
+                    'first_image' => asset($firstImage),
                     'user' => $userName,
                     'category' => $categoryName,
                     'bookmarked' => $isBookmarked, // Include bookmark status
@@ -84,7 +78,6 @@ class StoryController extends Controller
             });
 
             return response()->json([
-                'code' => 200,
                 'data' => $formattedStories,
                 // 'meta' => [
                 //     'current_page' => $stories->currentPage(),
@@ -100,7 +93,6 @@ class StoryController extends Controller
             ]);
 
             return response()->json([
-                'code' => 500,
                 'message' => 'An error occurred while fetching stories',
                 'error' => $e->getMessage()
             ], 500);
@@ -123,7 +115,7 @@ class StoryController extends Controller
             if ($request->hasFile('content_images')) {
                 foreach ($request->file('content_images') as $image) {
                     $path = $image->store('story_images', 'public');
-                    $imagePaths[] = Storage::url($path);
+                    $imagePaths[] = asset('storage/' . $path);
                 }
             }
 
@@ -136,7 +128,6 @@ class StoryController extends Controller
             ]);
 
             return response()->json([
-                'code' => 201,
                 'message' => 'Story created successfully',
                 'data' => [
                     'id' => (string) $story->id, // Explicitly cast to string
@@ -147,7 +138,6 @@ class StoryController extends Controller
             Log::error('Story Creation Error: ' . $e->getMessage());
 
             return response()->json([
-                'code' => 500,
                 'message' => 'An error occurred while creating the story',
                 'error' => $e->getMessage()
             ], 500);
@@ -166,7 +156,6 @@ class StoryController extends Controller
                 });
 
             return response()->json([
-                'code' => 200,
                 'data' => [
                     'id' => (string) $story->id,
                     'title' => $story->title,
@@ -181,7 +170,6 @@ class StoryController extends Controller
             Log::error('Story Fetch Error: ' . $e->getMessage());
 
             return response()->json([
-                'code' => 404,
                 'message' => 'Story not found or an error occurred',
                 'error' => $e->getMessage()
             ], 404);
@@ -229,7 +217,6 @@ class StoryController extends Controller
 
             // Return success response
             return response()->json([
-                'code' => 200,
                 'message' => 'Story updated successfully',
                 'data' => [
                     'id' => (string)$story->id,
@@ -247,7 +234,6 @@ class StoryController extends Controller
             Log::error('Story Update Error: ' . $e->getMessage());
 
             return response()->json([
-                'code' => 500,
                 'message' => 'An error occurred while updating the story',
                 'error' => $e->getMessage()
             ], 500);
@@ -273,14 +259,12 @@ class StoryController extends Controller
             $story->delete();
 
             return response()->json([
-                'success' => true,
                 'message' => 'Story deleted successfully'
             ], 200);
         } catch (\Exception $e) {
             Log::error('Story Deletion Error: ' . $e->getMessage());
 
             return response()->json([
-                'success' => false,
                 'message' => 'An error occurred while deleting the story',
                 'error' => $e->getMessage()
             ], 500);
@@ -312,7 +296,6 @@ class StoryController extends Controller
             ]);
 
             return response()->json([
-                'success' => true,
                 'message' => 'Image removed successfully',
                 'data' => $story
             ], 200);
@@ -320,7 +303,6 @@ class StoryController extends Controller
             Log::error('Image Removal Error: ' . $e->getMessage());
 
             return response()->json([
-                'success' => false,
                 'message' => 'An error occurred while removing the image',
                 'error' => $e->getMessage()
             ], 500);

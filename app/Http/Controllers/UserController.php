@@ -22,19 +22,17 @@ class UserController extends Controller
             }
 
             return response()->json([
-                'code' => 201,
                 'user' => [
                     'id' => $user->id,
                     'name' => $user->name,
                     'email' => $user->email,
-                    'profile_image' => $user->profile_image ? 'storage/' . $user->profile_image : null, // Return the profile image URL
+                    'profile_image' => asset($user->profile_image), // Return the profile image URL
                     'about' => $user->about,
                     'username' => $user->username,
                 ],
             ], 201);
         } catch (\Exception $e) {
             return response()->json([
-                'code' => 500,
                 'errors' => $e->getMessage(),
                 'message' => 'An error occurred while fetching user details.',
             ], 500);
@@ -100,7 +98,6 @@ class UserController extends Controller
             $user->save(); // Save all changes
 
             return response()->json([
-                'code' => 201,
                 'message' => 'Profile updated successfully.',
                 'user' => [
                     'id' => $user->id,
@@ -145,7 +142,6 @@ class UserController extends Controller
                 $user->save();
 
                 return response()->json([
-                    'code' => 201,
                     'message' => 'Profile image updated successfully.',
                     'user' => [
                         'id' => $user->id,
@@ -155,7 +151,6 @@ class UserController extends Controller
             }
 
             return response()->json([
-                'code' => 400,
                 'message' => 'No image uploaded.',
             ], 400);
         } catch (ValidationException $e) {
