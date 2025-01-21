@@ -48,20 +48,17 @@ class AuthController extends Controller
             $token = $user->createToken('Token')->plainTextToken;
 
             return response()->json([
-                'code' => 201,
                 'message' => 'User  registered successfully.',
                 'user' => $user,
                 'token' => $token
             ], 201);
         } catch (ValidationException $e) {
             return response()->json([
-                'code' => 422,
                 'message' => 'Validation failed.',
                 'errors' => $e->validator->errors()
             ], 422);
         } catch (\Exception $e) {
             return response()->json([
-                'code' => 500,
                 'message' => 'An error occurred while registering the user.',
                 'error' => $e->getMessage()
             ], 500);
@@ -96,20 +93,17 @@ class AuthController extends Controller
             $token = $user->createToken('Token')->plainTextToken;
 
             return response()->json([
-                'code' => 200,
                 'message' => 'User logged in successfully.',
                 'user' => $user,
                 'token' => $token
             ]);
         } catch (ValidationException $e) {
             return response()->json([
-                'code' => 422,
                 'message' => 'Validation failed.',
                 'errors' => $e->validator->errors()
             ], 422);
         } catch (\Exception $e) {
             return response()->json([
-                'code' => 500,
                 'message' => 'An error occurred while logging in.',
                 'error' => $e->getMessage()
             ], 500);
@@ -126,8 +120,7 @@ class AuthController extends Controller
             // Check if the token is provided
             if (!$token) {
                 return response()->json([
-                    'code' => 400,
-                    'message' => 'Token not provided.',
+                    'message' => 'Sorry, you must provide login token first.',
                 ], 400);
             }
 
@@ -138,7 +131,6 @@ class AuthController extends Controller
 
             if (!$user) {
                 return response()->json([
-                    'code' => 401,
                     'message' => 'Unauthorized. Token is invalid or user not found.'
                 ], 401);
             }
@@ -147,12 +139,10 @@ class AuthController extends Controller
             $user->tokens()->delete();
 
             return response()->json([
-                'code' => 200,
                 'message' => 'Logged out successfully.'
             ]);
         } catch (\Exception $e) {
             return response()->json([
-                'code' => 500,
                 'message' => 'An error occurred while logging out.',
                 'error' => $e->getMessage()
             ], 500);

@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Models\Bookmark;
 use App\Models\Story;
 use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Database\Eloquent\ModelNotFoundException;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Storage;
@@ -57,9 +58,22 @@ class StoryController extends Controller
                 $categoryName = $story->category ? $story->category->name : 'Uncategorized';
 
                 // Get the first image or set to null
-                $firstImage = is_array($story->content_images) && !empty($story->content_images)
-                    ? Storage::url($story->content_images[0])
-                    : null;
+                // $firstImage = is_array($story->content_images) && !empty($story->content_images)
+                //     ? Storage::url($story->content_images[0])
+                //     : null;
+
+                $imagePaths = is_string($story->content_images)
+                    ? json_decode($story->content_images)
+                    : $story->content_images;
+
+                $content_images = array_map(function ($image, $key) {
+                    return [
+                        'id' => is_array($image) && isset($image['id']) ? $image['id'] : $key + 1,
+                        'url' => is_array($image) && isset($image['url'])
+                            ? $image['url']
+                            : (is_string($image) ? $image : ''),
+                    ];
+                }, $imagePaths, array_keys($imagePaths));
 
                 $isBookmarked = $userId
                     ? Bookmark::where('story_id', $story->id)->where('user_id', $userId)->exists()
@@ -69,7 +83,7 @@ class StoryController extends Controller
                     'id' => (string) $story->id,
                     'title' => $story->title,
                     'preview_content' => Str::words($story->content, 50),
-                    'first_image' => asset($firstImage),
+                    'content_images' => $content_images,
                     'user' => $userName,
                     'category' => $categoryName,
                     'bookmarked' => $isBookmarked, // Include bookmark status
@@ -113,9 +127,12 @@ class StoryController extends Controller
             // Handle image uploads
             $imagePaths = [];
             if ($request->hasFile('content_images')) {
-                foreach ($request->file('content_images') as $image) {
+                foreach ($request->file('content_images') as $key => $image) {
                     $path = $image->store('story_images', 'public');
-                    $imagePaths[] = asset('storage/' . $path);
+                    $imagePaths[] = [
+                        'id' => $key + 1,
+                        'url' => asset('storage/' . $path)
+                    ];
                 }
             }
 
@@ -180,6 +197,17 @@ class StoryController extends Controller
     {
         // dd($request->file('content_images'));
         try {
+            $userId = auth('sanctum')->id();
+
+            // Find the story by ID
+            $story = Story::findOrFail($id);
+
+            if ($story->user_id !== $userId) {
+                return response()->json([
+                    'message' => 'Unauthorized to update this story'
+                ], 403);
+            }
+
             Log::info('Request Data: ', $request->all());
 
             // Validate request data
@@ -190,9 +218,6 @@ class StoryController extends Controller
                 'content_images.*' => 'image|mimes:jpeg,png,jpg,gif|max:2048', // '*' means validate each item in the array
                 'category_id' => 'sometimes|exists:categories,id'
             ]);
-
-            // Find the story by ID
-            $story = Story::findOrFail($id);
 
             // Initialize image paths with existing images
             $imagePaths = $story->content_images;
@@ -207,7 +232,7 @@ class StoryController extends Controller
                     $imagePaths[] = $path; // Append new images
                 }
             }
-            
+
             // $this->file('content_images')->store('story_images', 'public');
 
             // Update the story with validated data
@@ -223,9 +248,9 @@ class StoryController extends Controller
                     'title' => $story->title,
                     'content' => $story->content,
                     'content_images' => collect($story->content_images)
-                    ->map(function ($imagePath) {
-                        return Storage::url($imagePath);
-                    }),
+                        ->map(function ($imagePath) {
+                            return Storage::url($imagePath);
+                        }),
                     'category_id' => $story->category_id,
                 ]
             ], 200);
@@ -244,23 +269,47 @@ class StoryController extends Controller
     public function destroy(string $id)
     {
         try {
+            // Get the authenticated user's ID
+            $userId = auth('sanctum')->id();
+
+            // Find the story by ID or fail
             $story = Story::findOrFail($id);
 
+            // Check if the authenticated user is the owner of the story
+            if ($story->user_id !== $userId) {
+                return response()->json([
+                    'message' => 'Unauthorized to delete this story'
+                ], 403);
+            }
+
+            // Log the deletion, for debugging purposes
             Log::info('Deleting story with ID: ' . $id);
+
             // Delete associated images
             if (!empty($story->content_images)) {
-                foreach ($story->content_images as $imagePath) {
+                $contentImages = is_string($story->content_images)
+                    ? json_decode($story->content_images)
+                    : $story->content_images;
+
+                foreach ($contentImages as $imagePath) {
                     if (Storage::exists($imagePath)) {
                         Storage::delete($imagePath);
                     }
                 }
             }
 
+            // Delete the story
             $story->delete();
 
             return response()->json([
                 'message' => 'Story deleted successfully'
             ], 200);
+        } catch (ModelNotFoundException $e) {
+            Log::error('Story Not Found: ' . $e->getMessage());
+
+            return response()->json([
+                'message' => 'Story not found',
+            ], 404);
         } catch (\Exception $e) {
             Log::error('Story Deletion Error: ' . $e->getMessage());
 
@@ -271,6 +320,7 @@ class StoryController extends Controller
         }
     }
 
+    // Remove an image when editing the story, while not deleting the story
     public function removeImage(Request $request, string $id)
     {
         try {

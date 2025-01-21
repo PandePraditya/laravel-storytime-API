@@ -40,17 +40,27 @@ Route::get('/categories', [CategoryController::class, 'index']); // Public acces
 Route::middleware('auth:sanctum')->group(function () {
     Route::post('/logout', [AuthController::class, 'logout']);
 
-    // API routes for user profile
+    /* API routes for user profile */
+    // Getting user details
     Route::get('/user/details', [UserController::class, 'getUserDetails']);
+
+    // Updating user profile
     Route::put('/user/update-profile', [UserController::class, 'updateProfile']);
+
+    // Updating user profile image
     Route::post('/user/update-profile-image', [UserController::class, 'updateProfileImage']);
 
-    // API routes for Stories
+    // Getting stories made by the user
+    Route::get('/user/stories', [UserController::class, 'getUserStories']);
+
+    /* API routes for Stories */
     Route::apiResource('/stories', StoryController::class)->except(['index', 'show']); // Exclude Index and Show
     // Custom Story routes
     Route::delete('/stories/{id}/remove-image', [StoryController::class, 'removeImage']);
 
-    // API routes for Bookmarks
+    /* API routes for Bookmarks */
+    // Toggle bookmark
     Route::post('/bookmarks/toggle', [BookmarkController::class, 'toggle']);
+    // Get all bookmarks from the user
     Route::get('/bookmarks', [BookmarkController::class, 'index']);
 });

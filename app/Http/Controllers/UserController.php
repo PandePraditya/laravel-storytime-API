@@ -2,10 +2,14 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\Bookmark;
+use App\Models\Story;
 use Illuminate\Http\Request;
 use App\Models\User;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Support\Facades\Hash;
-// use Illuminate\Support\Facades\Log; // For checking logs
+use Illuminate\Support\Str;
+use Illuminate\Support\Facades\Log; // For checking logs
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Validation\ValidationException;
 
@@ -158,6 +162,103 @@ class UserController extends Controller
         } catch (\Exception $e) {
             return response()->json([
                 'message' => 'An error occurred while updating the profile image.',
+                'error' => $e->getMessage()
+            ], 500);
+        }
+    }
+
+    public function getUserStories(Request $request)
+    {
+        try {
+            $userId = auth('sanctum')->id(); // Get authenticated user's ID
+
+            if (!$userId) {
+                return response()->json([
+                    'message' => 'User not authenticated.'
+                ], 401);
+            }
+
+            $query = Story::with(['user', 'category'])
+                ->select('id', 'title', 'content', 'content_images', 'user_id', 'category_id', 'created_at')
+                ->where('user_id', $userId); // Fetch stories for this user only
+
+            // Search functionality
+            if ($request->has('search')) {
+                $searchTerm = $request->input('search');
+                $query->where(function (Builder $q) use ($searchTerm) {
+                    $q->where('title', 'like', "%{$searchTerm}%")
+                        ->orWhere('content', 'like', "%{$searchTerm}%")
+                        ->orWhereHas('category', function (Builder $categoryQuery) use ($searchTerm) {
+                            $categoryQuery->where('name', 'like', "%{$searchTerm}%");
+                        });
+                });
+            }
+
+            // Filtering by category
+            if ($request->has('category')) {
+                $query->whereHas('category', function (Builder $q) use ($request) {
+                    $q->where('name', $request->input('category'));
+                });
+            }
+
+            // Sorting
+            $sortBy = $request->input('sort_by', 'created_at');
+            $sortOrder = $request->input('sort_order', 'desc');
+            $query->orderBy($sortBy, $sortOrder);
+
+            // Pagination
+            $perPage = $request->input('per_page', 10);
+            $stories = $query->paginate($perPage);
+
+            // $stories = $query->get(); // Fetch all stories
+
+            $formattedStories = $stories->map(function ($story) use ($userId) {
+                $userName = $story->user ? $story->user->name : 'Unknown User';
+                $categoryName = $story->category ? $story->category->name : 'Uncategorized';
+
+                // Get the first image or set to null
+                $imagePaths = is_string($story->content_images)
+                    ? json_decode($story->content_images)
+                    : $story->content_images;
+
+                // Transform image paths to full URLs
+                $content_images = array_map(function ($image, $key) {
+                    return [
+                        'id' => is_array($image) && isset($image['id']) ? $image['id'] : $key + 1,
+                        'url' => is_array($image) && isset($image['url'])
+                            ? $image['url']
+                            : (is_string($image) ? $image : ''),
+                    ];
+                }, $imagePaths, array_keys($imagePaths));
+
+                // Check if the story is bookmarked by the user
+                $isBookmarked = Bookmark::where('story_id', $story->id)
+                    ->where('user_id', $userId)
+                    ->exists();
+
+                return [
+                    'id' => (string) $story->id,
+                    'title' => $story->title,
+                    'preview_content' => Str::words($story->content, 50),
+                    'content_images' => $content_images,
+                    'user' => $userName,
+                    'category' => $categoryName,
+                    'bookmarked' => $isBookmarked,
+                    'created_at' => $story->created_at ? $story->created_at->format('Y-m-d') : null,
+                ];
+            });
+
+            return response()->json([
+                'data' => $formattedStories
+            ], 200);
+        } catch (\Exception $e) {
+            Log::error('User Stories Error', [
+                'message' => $e->getMessage(),
+                'trace' => $e->getTraceAsString()
+            ]);
+
+            return response()->json([
+                'message' => 'An error occurred while fetching user stories',
                 'error' => $e->getMessage()
             ], 500);
         }

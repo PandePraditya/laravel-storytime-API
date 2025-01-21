@@ -19,7 +19,6 @@ class BookmarkController extends Controller
         try {
             if (!$request->user()) {
                 return response()->json([
-                    'code' => 401,
                     'message' => 'You need to log in to toggle a bookmark.',
                 ], 401);
             }
@@ -47,7 +46,6 @@ class BookmarkController extends Controller
                     'story_id' => $storyId,
                 ]);
                 return response()->json([
-                    'code' => 200,
                     'message' => 'Story bookmarked successfully.',
                 ], 200);
             }
@@ -58,7 +56,6 @@ class BookmarkController extends Controller
             ]);
 
             return response()->json([
-                'code' => 500,
                 'message' => 'An error occurred',
                 'error' => $e->getMessage()
             ], 500);
@@ -88,7 +85,6 @@ class BookmarkController extends Controller
             });
     
             return response()->json([
-                'code' => 200,
                 'data' => $formattedBookmarks,
             ], 200);
         } catch (\Exception $e) {
@@ -98,7 +94,6 @@ class BookmarkController extends Controller
             ]);
 
             return response()->json([
-                'code' => 500,
                 'message' => 'An error occurred while fetching bookmark',
                 'error' => $e->getMessage()
             ], 500);
