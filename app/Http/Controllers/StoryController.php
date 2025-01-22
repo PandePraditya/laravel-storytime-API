@@ -57,10 +57,10 @@ class StoryController extends Controller
                 $userName = $story->user ? $story->user->name : 'Unknown User';
                 $categoryName = $story->category ? $story->category->name : 'Uncategorized';
 
-                // Get the first image or set to null
-                // $firstImage = is_array($story->content_images) && !empty($story->content_images)
-                //     ? Storage::url($story->content_images[0])
-                //     : null;
+                // Get the user's profile picture if available, for showing the user's image of the story they made
+                $userImage = $story->user && $story->user->profile_image
+                    ? asset('storage/' . $story->user->profile_image)
+                    : null;
 
                 $imagePaths = is_string($story->content_images)
                     ? json_decode($story->content_images)
@@ -84,7 +84,10 @@ class StoryController extends Controller
                     'title' => $story->title,
                     'preview_content' => Str::words($story->content, 50),
                     'content_images' => $content_images,
-                    'user' => $userName,
+                    'user' => [
+                        'name' => $userName,
+                        'profile_image' => $userImage
+                    ],
                     'category' => $categoryName,
                     'bookmarked' => $isBookmarked, // Include bookmark status
                     'created_at' => $story->created_at ? $story->created_at->format('Y-m-d') : null,
