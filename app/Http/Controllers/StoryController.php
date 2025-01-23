@@ -91,7 +91,7 @@ class StoryController extends Controller
                     'category' => [
                        'id' => $story->category_id,
                        'name' => $categoryName,
-                    ]
+                    ],
                     'bookmarked' => $isBookmarked, // Include bookmark status
                     'created_at' => $story->created_at ? $story->created_at->format('Y-m-d') : null,
                 ];
