@@ -2,40 +2,18 @@
 
 namespace App\Http\Controllers;
 
+use App\Http\Requests\LoginRequest;
+use App\Http\Requests\RegisterRequest;
 use App\Models\User;
-use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Validation\ValidationException;
 
 class AuthController extends Controller
 {
-    public function register(Request $request)
+    public function register(RegisterRequest $request)
     {
         try {
-            // Validate the incoming request
-            $request->validate([
-                'name' => 'required|string|max:255',
-                'username' => 'required|string|max:255|unique:users', // Ensure username is unique
-                'email' => 'required|string|email|max:255|unique:users',
-                'password' => [
-                    'required',
-                    'string',
-                    'min:8', // Minimum length
-                    'confirmed', // Must match the password confirmation
-                    'regex:/[0-9]/', // Must contain at least one number
-                    'regex:/[!@#$%^&*(),.?":{}|<>]/', // Must contain at least one special character
-                ],
-                // Validation messages for custom error messages
-            ], [
-                'password.required' => 'The password field is required.',
-                'password.min' => 'The password must be at least 8 characters.',
-                'password.confirmed' => 'The password confirmation does not match.',
-                'password.regex' => 'The password must contain at least one number and one special character.',
-                'username.required' => 'The username field is required.',
-                'username.unique' => 'The username has already been taken.',
-            ]);
-
             // Create the user
             $user = User::create([
                 'name' => $request->name,
@@ -52,11 +30,6 @@ class AuthController extends Controller
                 'user' => $user,
                 'token' => $token
             ], 201);
-        } catch (ValidationException $e) {
-            return response()->json([
-                'message' => 'Validation failed.',
-                'errors' => $e->validator->errors()
-            ], 422);
         } catch (\Exception $e) {
             return response()->json([
                 'message' => 'An error occurred while registering the user.',
@@ -65,26 +38,21 @@ class AuthController extends Controller
         }
     }
 
-    public function login(Request $request)
+    public function login(LoginRequest $request)
     {
         try {
-            // Validate the incoming request
-            $request->validate([
-                'username_or_email' => 'required|string',
-                'password' => 'required|string',
-            ]);
-
             // Retrieve the login credentials
             $username_or_email = $request->input('username_or_email');
             $password = $request->input('password');
 
             // Find the user by email or username
-            $user = User::where('email', $username_or_email)->orWhere('username', $username_or_email)->first();
+            $user = User::where('email', $username_or_email)
+                ->orWhere('username', $username_or_email)
+                ->first();
 
             // Check if the user exists and the password is correct
             if (!$user || !Hash::check($password, $user->password)) {
                 return response()->json([
-                    'code' => 401,
                     'message' => 'The provided credentials are incorrect.'
                 ], 401);
             }
@@ -97,11 +65,6 @@ class AuthController extends Controller
                 'user' => $user,
                 'token' => $token
             ]);
-        } catch (ValidationException $e) {
-            return response()->json([
-                'message' => 'Validation failed.',
-                'errors' => $e->validator->errors()
-            ], 422);
         } catch (\Exception $e) {
             return response()->json([
                 'message' => 'An error occurred while logging in.',

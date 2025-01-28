@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Http\Requests\StoryStoreRequest;
 use App\Models\Bookmark;
 use App\Models\Story;
 use Illuminate\Database\Eloquent\Builder;
@@ -89,8 +90,8 @@ class StoryController extends Controller
                         'profile_image' => $userImage
                     ],
                     'category' => [
-                       'id' => $story->category_id,
-                       'name' => $categoryName,
+                        'id' => $story->category_id,
+                        'name' => $categoryName,
                     ],
                     'bookmarked' => $isBookmarked, // Include bookmark status
                     'created_at' => $story->created_at ? $story->created_at->format('Y-m-d') : null,
@@ -119,18 +120,10 @@ class StoryController extends Controller
         }
     }
 
-    public function store(Request $request)
+    public function store(StoryStoreRequest $request)
     {
         try {
-            $validatedData = $request->validate([
-                'title' => 'required|string|max:255',
-                'content' => 'required|string',
-                'content_images' => 'sometimes|array',
-                'content_images.*' => 'image|mimes:jpeg,png,jpg,gif|max:2048',
-                'category_id' => 'required|exists:categories,id'
-            ]);
-
-            // Handle image uploads
+            // Image upload logic
             $imagePaths = [];
             if ($request->hasFile('content_images')) {
                 foreach ($request->file('content_images') as $key => $image) {
@@ -142,11 +135,12 @@ class StoryController extends Controller
                 }
             }
 
+            // Create story
             $story = Story::create([
-                'title' => $validatedData['title'],
-                'content' => $validatedData['content'],
+                'title' => $request->input('title'),
+                'content' => $request->input('content'),
                 'content_images' => $imagePaths, // Store as array
-                'category_id' => $validatedData['category_id'],
+                'category_id' => $request->input('category_id'),
                 'user_id' => auth()->id()
             ]);
 
@@ -184,8 +178,16 @@ class StoryController extends Controller
                     'title' => $story->title,
                     'content' => $story->content,
                     'content_images' => $imageUrls,
-                    'user' => $story->user->name ?? 'Unknown User',
-                    'category' => $story->category->name ?? 'Uncategorized',
+                    'user' => [
+                        'name' => $story->user->name ?? 'Unknown User',
+                        'profile_image' => $story->user->profile_image
+                            ? asset('storage/' . $story->user->profile_image)
+                            : null
+                    ],
+                    'category' => [
+                        'id' => $story->category_id,
+                        'name' => $story->category->name ?? 'Uncategorized',
+                    ],
                     'created_at' => $story->created_at ? $story->created_at->format('Y-m-d') : null,
                 ]
             ], 200);
@@ -250,7 +252,7 @@ class StoryController extends Controller
             return response()->json([
                 'message' => 'Story updated successfully',
                 'data' => [
-                    'id' => (string)$story->id,
+                    'id' => (string) $story->id,
                     'title' => $story->title,
                     'content' => $story->content,
                     'content_images' => collect($story->content_images)
