@@ -166,6 +166,8 @@ class StoryController extends Controller
         try {
             $story = Story::with(['user', 'category'])->findOrFail($id);
 
+            $userName = $story->user ? $story->user->name : 'Unknown User';
+
             $imagePaths = is_string($story->content_images)
                 ? json_decode($story->content_images)
                 : $story->content_images;
@@ -174,8 +176,7 @@ class StoryController extends Controller
                 return [
                     'id' => is_array($image) && isset($image['id']) ? $image['id'] : $key + 1,
                     'url' => is_array($image) && isset($image['url'])
-                        ? $image['url']
-                        : (is_string($image) ? $image : ''),
+                        ? $image['url'] : (is_string($image) ? $image : ''),
                 ];
             }, $imagePaths, array_keys($imagePaths));
 
@@ -186,7 +187,7 @@ class StoryController extends Controller
                     'content' => $story->content,
                     'content_images' => $content_images,
                     'user' => [
-                        'name' => $story->user->name ?? 'Unknown User',
+                        'name' => $userName,
                         'profile_image' => $story->user->profile_image
                             ? asset('storage/' . $story->user->profile_image)
                             : null
@@ -235,16 +236,18 @@ class StoryController extends Controller
             ]);
 
             // Initialize image paths with existing images
-            $imagePaths = $story->content_images;
+            $imagePaths = $story->content_images ?? [];
 
             // Handle image uploads if new images are provided
             if ($request->hasFile('content_images')) {
-                // Clear existing images if you want to replace them
-                $imagePaths = []; // Replace with an empty array
+                $imagePaths = []; // Clear old images
 
-                foreach ($request->file('content_images') as $image) {
+                foreach ($request->file('content_images') as $key => $image) {
                     $path = $image->store('story_images', 'public');
-                    $imagePaths[] = $path; // Append new images
+                    $imagePaths[] = [
+                        'id' => $key + 1,
+                        'url' => asset('storage/' . $path)
+                    ];
                 }
             }
 
@@ -262,10 +265,7 @@ class StoryController extends Controller
                     'id' => (string) $story->id,
                     'title' => $story->title,
                     'content' => $story->content,
-                    'content_images' => collect($story->content_images)
-                        ->map(function ($imagePath) {
-                            return Storage::url($imagePath);
-                        }),
+                    'content_images' => $story->content_images,
                     'category_id' => $story->category_id,
                 ]
             ], 200);
@@ -279,7 +279,6 @@ class StoryController extends Controller
             ], 500);
         }
     }
-
 
     public function destroy(string $id)
     {
