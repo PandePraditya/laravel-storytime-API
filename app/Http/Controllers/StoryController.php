@@ -333,24 +333,36 @@ class StoryController extends Controller
     {
         try {
             $validatedData = $request->validate([
-                'image_path' => 'required|string'
+                'image_id' => 'required|integer'
             ]);
 
             $story = Story::findOrFail($id);
 
-            // Filter out the image to be removed
-            $updatedImages = array_filter($story->content_images ?? [], function ($image) use ($validatedData) {
-                return $image !== $validatedData['image_path'];
-            });
+            // Find the image to be removed
+            $imageToRemove = collect($story->content_images)->firstWhere('id', $validatedData['image_id']);
 
-            // Delete the image from storage
-            if (Storage::exists($validatedData['image_path'])) {
-                Storage::delete($validatedData['image_path']);
+            if (!$imageToRemove) {
+                return response()->json([
+                    'message' => 'Image not found'
+                ], 404);
             }
+
+            // Extract the relative path from the full URL
+            $relativePath = str_replace(asset('storage/') . '/', '', $imageToRemove['url']);
+
+            // Remove the image from storage
+            if (Storage::disk('public')->exists($relativePath)) {
+                Storage::disk('public')->delete($relativePath);
+            }
+
+            // Remove the image from the content_images array
+            $updatedImages = array_values(array_filter($story->content_images, function ($image) use ($validatedData) {
+                return $image['id'] !== $validatedData['image_id'];
+            }));
 
             // Update the story with the remaining images
             $story->update([
-                'content_images' => array_values($updatedImages)
+                'content_images' => $updatedImages
             ]);
 
             return response()->json([
