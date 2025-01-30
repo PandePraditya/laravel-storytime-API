@@ -166,20 +166,25 @@ class StoryController extends Controller
         try {
             $story = Story::with(['user', 'category'])->findOrFail($id);
 
-            // Transform image paths to full URLs
-            $imageData = collect($story->content_images)->map(function ($image) {
+            $imagePaths = is_string($story->content_images)
+                ? json_decode($story->content_images)
+                : $story->content_images;
+
+            $content_images = array_map(function ($image, $key) {
                 return [
-                    'id' => $image['id'],  // Keep the image ID
-                    'url' => $image['url'] // Keep the image URL
+                    'id' => is_array($image) && isset($image['id']) ? $image['id'] : $key + 1,
+                    'url' => is_array($image) && isset($image['url'])
+                        ? $image['url']
+                        : (is_string($image) ? $image : ''),
                 ];
-            });
+            }, $imagePaths, array_keys($imagePaths));
 
             return response()->json([
                 'data' => [
                     'id' => (string) $story->id,
                     'title' => $story->title,
                     'content' => $story->content,
-                    'content_images' => $imageData,
+                    'content_images' => $content_images,
                     'user' => [
                         'name' => $story->user->name ?? 'Unknown User',
                         'profile_image' => $story->user->profile_image
