@@ -167,13 +167,12 @@ class StoryController extends Controller
             $story = Story::with(['user', 'category'])->findOrFail($id);
 
             // Transform image paths to full URLs
-            $imageData = collect(json_decode($story->content_images, true))
-                ->map(function ($image) {
-                    return [
-                        'id' => $image['id'],  // Preserve the image ID
-                        'url' => $image['url'] // Preserve the image URL
-                    ];
-                });
+            $imageData = collect($story->content_images)->map(function ($image) {
+                return [
+                    'id' => $image['id'],  // Keep the image ID
+                    'url' => $image['url'] // Keep the image URL
+                ];
+            });
 
             return response()->json([
                 'data' => [
