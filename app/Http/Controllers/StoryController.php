@@ -286,28 +286,42 @@ class StoryController extends Controller
             // Get the authenticated user's ID
             $userId = auth('sanctum')->id();
 
+            // Ensure user is authenticated
+            if (!$userId) {
+                return response()->json([
+                    'message' => 'Unauthorized, please login first.',
+                ], 401);
+            }
+
             // Find the story by ID or fail
-            $story = Story::findOrFail($id);
+            $story = Story::find($id); // Using find instead of findOrFail
+            if (!$story) {
+                return response()->json([
+                    'message' => 'Story not found.',
+                ], 404);
+            }
 
             // Check if the authenticated user is the owner of the story
             if ($story->user_id !== $userId) {
                 return response()->json([
-                    'message' => 'Unauthorized to delete this story'
+                    'message' => 'Unauthorized to delete this story.',
                 ], 403);
             }
 
             // Log the deletion, for debugging purposes
             Log::info('Deleting story with ID: ' . $id);
 
-            // Delete associated images
+            // Delete associated images (if any)
             if (!empty($story->content_images)) {
                 $contentImages = is_string($story->content_images)
-                    ? json_decode($story->content_images)
+                    ? json_decode($story->content_images, true)
                     : $story->content_images;
 
                 foreach ($contentImages as $imagePath) {
                     if (Storage::exists($imagePath)) {
                         Storage::delete($imagePath);
+                    } else {
+                        Log::warning('Image not found for deletion: ' . $imagePath);
                     }
                 }
             }
@@ -315,21 +329,18 @@ class StoryController extends Controller
             // Delete the story
             $story->delete();
 
+            // Return success response
             return response()->json([
-                'message' => 'Story deleted successfully'
+                'message' => 'Story deleted successfully',
             ], 200);
-        } catch (ModelNotFoundException $e) {
-            Log::error('Story Not Found: ' . $e->getMessage());
-
-            return response()->json([
-                'message' => 'Story not found',
-            ], 404);
         } catch (\Exception $e) {
-            Log::error('Story Deletion Error: ' . $e->getMessage());
+            // Catch any exception and log it for debugging
+            Log::error('Error deleting story with ID ' . $id . ': ' . $e->getMessage());
 
+            // Return a response with a 500 Internal Server Error status
             return response()->json([
-                'message' => 'An error occurred while deleting the story',
-                'error' => $e->getMessage()
+                'message' => 'An error occurred while deleting the story.',
+                'error' => $e->getMessage(),
             ], 500);
         }
     }
