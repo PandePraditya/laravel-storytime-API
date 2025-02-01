@@ -313,15 +313,17 @@ class StoryController extends Controller
 
             // Delete associated images (if any)
             if (!empty($story->content_images)) {
-                $contentImages = is_string($story->content_images)
-                    ? json_decode($story->content_images, true)
-                    : $story->content_images;
+                // Ensure content_images is an array (if it's stored as an array)
+                $contentImages = is_array($story->content_images) ? $story->content_images : json_decode($story->content_images, true);
 
-                foreach ($contentImages as $imagePath) {
+                foreach ($contentImages as $image) {
+                    // Assuming image contains an 'url' field, which is the public URL
+                    // Extract the relative path for storage deletion
+                    $imagePath = str_replace(asset('storage/'), 'storage/', $image['url']);
+
+                    // Delete image from storage if it exists
                     if (Storage::exists($imagePath)) {
                         Storage::delete($imagePath);
-                    } else {
-                        Log::warning('Image not found for deletion: ' . $imagePath);
                     }
                 }
             }
