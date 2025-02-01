@@ -22,7 +22,7 @@ return [
     'allowed_origins' => [
         'http://localhost:3000', 
         'http://127.0.0.1:3000',
-        'https://srv711690.hstgr.cloud',
+        // 'https://srv711690.hstgr.cloud',
     ],
 
     'allowed_origins_patterns' => [],
