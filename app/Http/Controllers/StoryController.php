@@ -227,9 +227,6 @@ class StoryController extends Controller
                     $imagePaths[] = asset('storage/' . $path);
                 }
                 $validatedData['content_images'] = $imagePaths;
-            } else {
-                // If no new images are provided, retain the existing images
-                unset($validatedData['content_images']);
             }
 
             // Update the story
