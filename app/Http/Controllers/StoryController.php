@@ -3,7 +3,6 @@
 namespace App\Http\Controllers;
 
 use App\Http\Requests\StoryStoreRequest;
-use App\Http\Requests\StoryUpdateRequest;
 use App\Models\Bookmark;
 use App\Models\Story;
 use Illuminate\Database\Eloquent\Builder;
@@ -210,34 +209,69 @@ class StoryController extends Controller
         }
     }
 
-    public function update(StoryUpdateRequest $request, $id)
+    public function update(Request $request, string $id)
     {
+        // dd($request->file('content_images'));
         try {
-            // Get the validated data
-            $validatedData = $request->validated();
+            $userId = auth('sanctum')->id();
 
-            // Find the story
+            // Find the story by ID
             $story = Story::findOrFail($id);
+
+            if ($story->user_id !== $userId) {
+                return response()->json([
+                    'message' => 'Unauthorized to update this story'
+                ], 403);
+            }
+
+            Log::info('Request Data: ', $request->all());
+
+            // Validate request data
+            $validatedData = $request->validate([
+                'title' => 'sometimes|string|max:255',
+                'content' => 'sometimes|string',
+                'content_images' => 'sometimes|array',
+                'content_images.*' => 'image|mimes:jpeg,png,jpg,gif|max:2048', // '*' means validate each item in the array
+                'category_id' => 'sometimes|exists:categories,id'
+            ]);
+
+            // Initialize image paths with existing images
+            $imagePaths = $story->content_images ?? [];
 
             // Handle image uploads if new images are provided
             if ($request->hasFile('content_images')) {
-                $imagePaths = [];
-                foreach ($request->file('content_images') as $image) {
+                $imagePaths = []; // Clear old images
+
+                foreach ($request->file('content_images') as $key => $image) {
                     $path = $image->store('story_images', 'public');
-                    $imagePaths[] = asset('storage/' . $path);
+                    $imagePaths[] = [
+                        'id' => $key + 1,
+                        'url' => asset('storage/' . $path)
+                    ];
                 }
-                $validatedData['content_images'] = $imagePaths;
             }
 
-            // Update the story
-            $story->update($validatedData);
+            // $this->file('content_images')->store('story_images', 'public');
 
+            // Update the story with validated data
+            $story->update(array_merge($validatedData, [
+                'content_images' => $imagePaths, // Store the updated array of images
+            ]));
+
+            // Return success response
             return response()->json([
                 'message' => 'Story updated successfully',
-                'data' => $story
+                'data' => [
+                    'id' => (string) $story->id,
+                    'title' => $story->title,
+                    'content' => $story->content,
+                    'content_images' => $story->content_images,
+                    'category_id' => $story->category_id,
+                ]
             ], 200);
         } catch (\Exception $e) {
-            Log::error('Error updating story: ' . $e->getMessage());
+            // Log error and return response
+            Log::error('Story Update Error: ' . $e->getMessage());
 
             return response()->json([
                 'message' => 'An error occurred while updating the story',
