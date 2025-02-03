@@ -213,16 +213,17 @@ class StoryController extends Controller
     {
         // dd($request->file('content_images'));
         try {
-            $userId = auth('sanctum')->id();
+            // Get the authenticated user's ID
+            // $userId = auth('sanctum')->id();
 
             // Find the story by ID
             $story = Story::findOrFail($id);
 
-            if ($story->user_id !== $userId) {
-                return response()->json([
-                    'message' => 'Unauthorized to update this story'
-                ], 403);
-            }
+            // if ($story->user_id !== $userId) {
+            //     return response()->json([
+            //         'message' => 'Unauthorized to update this story'
+            //     ], 403);
+            // }
 
             Log::info('Request Data: ', $request->all());
 
