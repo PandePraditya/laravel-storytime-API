@@ -49,7 +49,7 @@ class BookmarkController extends Controller
                     'message' => 'Story bookmarked successfully.',
                 ], 200);
             }
-        } catch(\Exception $e) {
+        } catch (\Exception $e) {
             Log::error('Bookmark Error', [
                 'message' => $e->getMessage(),
                 'trace' => $e->getTraceAsString()
@@ -68,22 +68,51 @@ class BookmarkController extends Controller
     public function index(Request $request)
     {
         try {
-            $bookmarks = $request->user()->bookmarks()->with('story.user', 'story.category')->get();
-    
-            $formattedBookmarks = $bookmarks->map(function ($bookmark) {
+            $user = $request->user();
+            $bookmarks = $user->bookmarks()->with('story.user', 'story.category')->get();
+
+            $formattedBookmarks = $bookmarks->map(function ($bookmark) use ($user) {
                 $story = $bookmark->story;
+                $userName = $story->user ? $story->user->name : 'Unknown User';
+                $categoryName = $story->category ? $story->category->name : 'Uncategorized';
+
+                // Get user's profile image
+                $userImage = $story->user && $story->user->profile_image
+                    ? asset('storage/' . $story->user->profile_image)
+                    : null;
+
+                // Handle content images as an array
+                $imagePaths = is_string($story->content_images)
+                    ? json_decode($story->content_images, true)
+                    : $story->content_images;
+
+                $content_images = array_map(function ($image, $key) {
+                    return [
+                        'id' => is_array($image) && isset($image['id']) ? $image['id'] : $key + 1,
+                        'url' => is_array($image) && isset($image['url'])
+                            ? $image['url']
+                            : (is_string($image) ? $image : ''),
+                    ];
+                }, $imagePaths ?: [], array_keys($imagePaths ?: []));
+
                 return [
                     'id' => (string) $story->id,
                     'title' => $story->title,
                     'preview_content' => Str::words($story->content, 50),
-                    'first_image' => is_array($story->content_images) && !empty($story->content_images)
-                        ? Storage::url($story->content_images[0])
-                        : null,
-                    'user' => $story->user ? $story->user->name : 'Unknown User',
-                    'category' => $story->category ? $story->category->name : 'Uncategorized',
+                    'content_images' => $content_images,
+                    'user' => [
+                        'name' => $userName,
+                        'profile_image' => $userImage
+                    ],
+                    'category' => [
+                        'id' => $story->category_id,
+                        'name' => $categoryName,
+                    ],
+                    'bookmarked' => true, // Since it's fetched from bookmarks, it's always true
+                    'created_at' => $story->created_at ? $story->created_at->format('Y-m-d') : null,
                 ];
             });
-    
+
             return response()->json([
                 'data' => $formattedBookmarks,
             ], 200);
@@ -94,7 +123,7 @@ class BookmarkController extends Controller
             ]);
 
             return response()->json([
-                'message' => 'An error occurred while fetching bookmark',
+                'message' => 'An error occurred while fetching bookmarks',
                 'error' => $e->getMessage()
             ], 500);
         }
