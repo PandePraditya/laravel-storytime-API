@@ -45,9 +45,25 @@ class StoryController extends Controller
             }
 
             // Sorting
-            $sortBy = $request->input('sort_by', 'created_at');
-            $sortOrder = $request->input('sort_order', 'desc');
-            $query->orderBy($sortBy, $sortOrder);
+            $sortKey = $request->input('sort_by', 'newest');
+
+            // Add more sorting options as needed
+            switch ($sortKey) {
+                case 'popular':
+                    $query->withCount('bookmarks')
+                        ->orderBy('bookmarks_count', 'desc'); // Order by number of bookmarks
+                    break;
+                case 'a-z':
+                    $query->orderBy('title', 'asc');
+                    break;
+                case 'z-a':
+                    $query->orderBy('title', 'desc');
+                    break;
+                case 'newest':
+                default:
+                    $query->orderBy('created_at', 'desc');
+                    break;
+            }
 
             // Pagination
             // $perPage = $request->input('per_page', 10);
