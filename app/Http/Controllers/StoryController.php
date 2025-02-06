@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Http\Requests\StoryStoreRequest;
+use App\Http\Requests\StoryUpdateRequest;
 use App\Models\Bookmark;
 use App\Models\Story;
 use Illuminate\Database\Eloquent\Builder;
@@ -232,76 +233,35 @@ class StoryController extends Controller
         }
     }
 
-    public function update(Request $request, string $id)
+    public function update(StoryUpdateRequest $request, string $id)
     {
         try {
-            // Get the authenticated user's ID
-            $userId = auth('sanctum')->id();
-            // Find the story by ID
             $story = Story::findOrFail($id);
-
-            // Check if the authenticated user is the owner of the story
-            if ($story->user_id !== $userId) {
-                return response()->json([
-                    'message' => 'Unauthorized to update this story'
-                ], 403);
-            }
-
-            // Log the request data for debugging
-            Log::info('Request Data: ', $request->all());
-
-            // Validate the request
-            $validatedData = $request->validate([
-                'title' => 'sometimes|string|max:255',
-                'content' => 'sometimes|string',
-                'content_images' => 'sometimes|array|max:5', // Limit total number of images
-                'content_images.*' => 'image|mimes:jpeg,png,jpg,gif|max:2048',
-                'category_id' => 'sometimes|exists:categories,id'
-            ], [
-                'title.string' => 'The title must be text.',
-                'title.max' => 'The title cannot exceed 255 characters.',
-                'content.string' => 'The content must be text.',
-                'content_images.array' => 'The images must be provided as an array.',
-                'content_images.max' => 'You cannot upload more than 5 images.',
-                'content_images.*.image' => 'File :attribute must be an image.',
-                'content_images.*.mimes' => 'File :attribute must be a JPEG, PNG, JPG, or GIF.',
-                'content_images.*.max' => 'File :attribute must not exceed 2MB.',
-                'category_id.exists' => 'The selected category does not exist.',
-            ]);
-
-            // Initialize image paths with existing images
             $imagePaths = $story->content_images ?? [];
 
-            // Handle image uploads if new images are provided
             if ($request->hasFile('content_images')) {
                 // Delete old images from storage
                 if (!empty($story->content_images)) {
                     foreach ($story->content_images as $image) {
                         $path = str_replace(asset('storage/'), '', $image['url']);
-                        if (Storage::disk('public')->exists($path)) {
-                            Storage::disk('public')->delete($path);
-                        }
+                        Storage::disk('public')->exists($path) && Storage::disk('public')->delete($path);
                     }
                 }
 
-                $imagePaths = []; // Clear old image paths
-
-                // Upload new images and store their paths
-                foreach ($request->file('content_images') as $key => $image) {
+                $imagePaths = array_map(function ($image, $key) {
                     $path = $image->store('story_images', 'public');
-                    $imagePaths[] = [
+                    return [
                         'id' => $key + 1,
                         'url' => asset('storage/' . $path)
                     ];
-                }
+                }, $request->file('content_images'), array_keys($request->file('content_images')));
             }
 
-            // Update the story with the new data
-            $story->update(array_merge($validatedData, [
-                'content_images' => $imagePaths,
-            ]));
+            $story->update(array_merge(
+                $request->validated(),
+                ['content_images' => $imagePaths]
+            ));
 
-            // Return a success response
             return response()->json([
                 'message' => 'Story updated successfully',
                 'data' => [
@@ -311,10 +271,15 @@ class StoryController extends Controller
                     'content_images' => $story->content_images,
                     'category_id' => $story->category_id,
                 ]
-            ], 200);
+            ]);
+
         } catch (\Exception $e) {
-            // Log the error
-            Log::error('Story Update Error: ' . $e->getMessage());
+            Log::error('Story Update Error', [
+                'story_id' => $id,
+                'user_id' => auth('sanctum')->id(),
+                'error' => $e->getMessage(),
+                'trace' => $e->getTraceAsString()
+            ]);
 
             return response()->json([
                 'message' => 'An error occurred while updating the story',
@@ -391,53 +356,53 @@ class StoryController extends Controller
     }
 
     // Remove an image when editing the story, while not deleting the story
-    public function removeImage(Request $request, string $id)
-    {
-        try {
-            $validatedData = $request->validate([
-                'image_id' => 'required|integer'
-            ]);
+    // public function removeImage(Request $request, string $id)
+    // {
+    //     try {
+    //         $validatedData = $request->validate([
+    //             'image_id' => 'required|integer'
+    //         ]);
 
-            $story = Story::findOrFail($id);
+    //         $story = Story::findOrFail($id);
 
-            // Find the image to be removed
-            $imageToRemove = collect($story->content_images)->firstWhere('id', $validatedData['image_id']);
+    //         // Find the image to be removed
+    //         $imageToRemove = collect($story->content_images)->firstWhere('id', $validatedData['image_id']);
 
-            if (!$imageToRemove) {
-                return response()->json([
-                    'message' => 'Image not found'
-                ], 404);
-            }
+    //         if (!$imageToRemove) {
+    //             return response()->json([
+    //                 'message' => 'Image not found'
+    //             ], 404);
+    //         }
 
-            // Extract the relative path from the full URL
-            $relativePath = str_replace(asset('storage/') . '/', '', $imageToRemove['url']);
+    //         // Extract the relative path from the full URL
+    //         $relativePath = str_replace(asset('storage/') . '/', '', $imageToRemove['url']);
 
-            // Remove the image from storage
-            if (Storage::disk('public')->exists($relativePath)) {
-                Storage::disk('public')->delete($relativePath);
-            }
+    //         // Remove the image from storage
+    //         if (Storage::disk('public')->exists($relativePath)) {
+    //             Storage::disk('public')->delete($relativePath);
+    //         }
 
-            // Remove the image from the content_images array
-            $updatedImages = array_values(array_filter($story->content_images, function ($image) use ($validatedData) {
-                return $image['id'] !== $validatedData['image_id'];
-            }));
+    //         // Remove the image from the content_images array
+    //         $updatedImages = array_values(array_filter($story->content_images, function ($image) use ($validatedData) {
+    //             return $image['id'] !== $validatedData['image_id'];
+    //         }));
 
-            // Update the story with the remaining images
-            $story->update([
-                'content_images' => $updatedImages
-            ]);
+    //         // Update the story with the remaining images
+    //         $story->update([
+    //             'content_images' => $updatedImages
+    //         ]);
 
-            return response()->json([
-                'message' => 'Image removed successfully',
-                'data' => $story
-            ], 200);
-        } catch (\Exception $e) {
-            Log::error('Image Removal Error: ' . $e->getMessage());
+    //         return response()->json([
+    //             'message' => 'Image removed successfully',
+    //             'data' => $story
+    //         ], 200);
+    //     } catch (\Exception $e) {
+    //         Log::error('Image Removal Error: ' . $e->getMessage());
 
-            return response()->json([
-                'message' => 'An error occurred while removing the image',
-                'error' => $e->getMessage()
-            ], 500);
-        }
-    }
+    //         return response()->json([
+    //             'message' => 'An error occurred while removing the image',
+    //             'error' => $e->getMessage()
+    //         ], 500);
+    //     }
+    // }
 }
