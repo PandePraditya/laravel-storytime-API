@@ -236,32 +236,58 @@ class StoryController extends Controller
     public function update(StoryUpdateRequest $request, string $id)
     {
         try {
+            // Get the authenticated user's ID
+            $userId = auth('sanctum')->id();
+
+            // Find the story by ID
             $story = Story::findOrFail($id);
-            $imagePaths = $story->content_images ?? [];
 
-            if ($request->hasFile('content_images')) {
-                // Delete old images from storage
-                if (!empty($story->content_images)) {
-                    foreach ($story->content_images as $image) {
-                        $path = str_replace(asset('storage/'), '', $image['url']);
-                        Storage::disk('public')->exists($path) && Storage::disk('public')->delete($path);
-                    }
-                }
-
-                $imagePaths = array_map(function ($image, $key) {
-                    $path = $image->store('story_images', 'public');
-                    return [
-                        'id' => $key + 1,
-                        'url' => asset('storage/' . $path)
-                    ];
-                }, $request->file('content_images'), array_keys($request->file('content_images')));
+            // Check if the authenticated user is the owner of the story
+            if ($story->user_id !== $userId) {
+                Log::warning('Unauthorized to update story with ID ' . $id);
+                return response()->json([
+                    'message' => 'Unauthorized to update this story'
+                ], 403);
             }
 
-            $story->update(array_merge(
-                $request->validated(),
-                ['content_images' => $imagePaths]
-            ));
+            // Validate the request
+            $validatedData = $request->validated();
 
+            // Get existing images from the story
+            $existingImages = $story->content_images ?? [];
+
+            // Get the list of existing image IDs to keep
+            $existingImageIds = $request->input('existing_images', []);
+            if (is_string($existingImageIds)) {
+                $existingImageIds = json_decode($existingImageIds, true) ?? [];
+            }
+
+            // Filter out removed images and keep only the ones that should remain
+            $remainingImages = array_filter($existingImages, function ($image) use ($existingImageIds) {
+                return in_array($image['id'], $existingImageIds);
+            });
+
+            // Handle new image uploads if any
+            $newImages = [];
+            if ($request->hasFile('content_images')) {
+                foreach ($request->file('content_images') as $key => $image) {
+                    $path = $image->store('story_images', 'public');
+                    $newImages[] = [
+                        'id' => count($remainingImages) + $key + 1, // Generate new sequential IDs
+                        'url' => asset('storage/' . $path)
+                    ];
+                }
+            }
+
+            // Combine remaining existing images with new images
+            $finalImages = array_merge($remainingImages, $newImages);
+
+            // Update the story with the new data
+            $story->update(array_merge($validatedData, [
+                'content_images' => $finalImages,
+            ]));
+
+            // Return a success response
             return response()->json([
                 'message' => 'Story updated successfully',
                 'data' => [
@@ -271,16 +297,9 @@ class StoryController extends Controller
                     'content_images' => $story->content_images,
                     'category_id' => $story->category_id,
                 ]
-            ]);
-
+            ], 200);
         } catch (\Exception $e) {
-            Log::error('Story Update Error', [
-                'story_id' => $id,
-                'user_id' => auth('sanctum')->id(),
-                'error' => $e->getMessage(),
-                'trace' => $e->getTraceAsString()
-            ]);
-
+            Log::error('Story Update Error: ' . $e->getMessage());
             return response()->json([
                 'message' => 'An error occurred while updating the story',
                 'error' => $e->getMessage()

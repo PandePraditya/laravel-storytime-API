@@ -2,7 +2,6 @@
 
 namespace App\Http\Requests;
 
-use App\Models\Story;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Contracts\Validation\Validator;
 use Illuminate\Http\Exceptions\HttpResponseException;
@@ -10,24 +9,6 @@ use Illuminate\Support\Facades\Log;
 
 class StoryUpdateRequest extends FormRequest
 {
-    /**
-     * Determine if the user is authorized to make this request.
-     */
-    public function authorize(): bool
-    {
-        $storyId = $this->route('id');
-
-        // Find the story but don't throw an exception if not found
-        $story = Story::find($storyId);
-
-        // If story doesn't exist, return false to trigger failedAuthorization
-        if (!$story) {
-            return false;
-        }
-
-        return auth('sanctum')->id() === $story->user_id;
-    }
-
     /**
      * Get the validation rules that apply to the request.
      */
@@ -80,27 +61,6 @@ class StoryUpdateRequest extends FormRequest
                 'message' => 'Validation failed',
                 'errors' => $validator->errors()
             ], 422)
-        );
-    }
-
-    /**
-     * Handle a failed authorization attempt.
-     *
-     * @return void
-     *
-     * @throws \Illuminate\Http\Exceptions\HttpResponseException
-     */
-    protected function failedAuthorization()
-    {
-        Log::error('Authorization Failed', [
-            'user_id' => auth('sanctum')->id(),
-            'route_id' => $this->route('id')
-        ]);
-        // Return a JSON response when the user is not authorized
-        throw new HttpResponseException(
-            response()->json([
-                'message' => 'Unauthorized to update this story'
-            ], 403)
         );
     }
 }
