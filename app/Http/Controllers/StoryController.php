@@ -6,7 +6,7 @@ use App\Http\Requests\StoryStoreRequest;
 use App\Models\Bookmark;
 use App\Models\Story;
 use Illuminate\Database\Eloquent\Builder;
-use Illuminate\Database\Eloquent\ModelNotFoundException;
+// use Illuminate\Database\Eloquent\ModelNotFoundException;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Storage;
@@ -50,7 +50,7 @@ class StoryController extends Controller
             // Add more sorting options as needed
             switch ($sortKey) {
                 case 'popular':
-                    $query->withCount('bookmarks')
+                    $query->withCount('bookmarks') // withCount means counting each items bookmarks
                         ->orderBy('bookmarks_count', 'desc'); // Order by number of bookmarks
                     break;
                 case 'a-z':
@@ -65,13 +65,17 @@ class StoryController extends Controller
                     break;
             }
 
+            // /api/stories?sort_by=popular&category=fiction
+
             // Pagination
             // $perPage = $request->input('per_page', 10);
             // $stories = $query->paginate($perPage);
             $stories = $query->get();
 
             $formattedStories = $stories->map(function ($story) use ($userId) {
+                // Get the user's name, or 'Unknown User' if no data
                 $userName = $story->user ? $story->user->name : 'Unknown User';
+                // Get the category name, uncategorized if no category
                 $categoryName = $story->category ? $story->category->name : 'Uncategorized';
 
                 // Get the user's profile picture if available, for showing the user's image of the story they made
@@ -79,10 +83,12 @@ class StoryController extends Controller
                     ? asset('storage/' . $story->user->profile_image)
                     : null;
 
+                // Convert content_images to an array if it's a string
                 $imagePaths = is_string($story->content_images)
                     ? json_decode($story->content_images)
                     : $story->content_images;
 
+                // Map the image paths to a consistent format
                 $content_images = array_map(function ($image, $key) {
                     return [
                         'id' => is_array($image) && isset($image['id']) ? $image['id'] : $key + 1,
@@ -92,6 +98,7 @@ class StoryController extends Controller
                     ];
                 }, $imagePaths, array_keys($imagePaths));
 
+                // Check if the story is bookmarked by the authenticated user
                 $isBookmarked = $userId
                     ? Bookmark::where('story_id', $story->id)->where('user_id', $userId)->exists()
                     : false;
@@ -99,7 +106,7 @@ class StoryController extends Controller
                 return [
                     'id' => (string) $story->id,
                     'title' => $story->title,
-                    'preview_content' => Str::words($story->content, 50),
+                    'preview_content' => Str::words($story->content, 50), // Show only 50 words
                     'content_images' => $content_images,
                     'user' => [
                         'name' => $userName,
