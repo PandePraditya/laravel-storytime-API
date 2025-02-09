@@ -207,8 +207,8 @@ class UserController extends Controller
             $query->orderBy($sortBy, $sortOrder);
 
             // Pagination
-            $perPage = $request->input('per_page', 10);
-            $stories = $query->paginate($perPage);
+            $paginated = $request->input('per_page', 10);
+            $stories = $query->paginate($paginated);
 
             // $stories = $query->get(); // Fetch all stories
 
@@ -249,7 +249,13 @@ class UserController extends Controller
             });
 
             return response()->json([
-                'data' => $formattedStories
+                'data' => $formattedStories,
+                'meta' => [
+                    'total' => $stories->total(),
+                    'current_page' => $stories->currentPage(),
+                    'per_page' => $stories->perPage(),
+                    'last_page' => $stories->lastPage(),
+                ],
             ], 200);
         } catch (\Exception $e) {
             Log::error('User Stories Error: ', [

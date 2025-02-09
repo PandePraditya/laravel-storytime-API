@@ -80,8 +80,8 @@ class StoryController extends Controller
 
             // Paginate when key is present
             if ($request->has('per_page')) {
-                $perPage = $request->input('per_page', 10);
-                $stories = $query->paginate($perPage);
+                $isPaginated = $request->input('per_page', 10);
+                $stories = $query->paginate($isPaginated);
             } else {
                 $stories = $query->get();
             }
@@ -136,14 +136,18 @@ class StoryController extends Controller
                 ];
             });
 
+            /* 
+            * Return the formatted stories
+            * Include pagination meta if paginated
+            */
             return response()->json([
                 'data' => $formattedStories,
-                // 'meta' => [
-                //     'current_page' => $stories->currentPage(),
-                //     'last_page' => $stories->lastPage(),
-                //     'per_page' => $stories->perPage(),
-                //     'total' => $stories->total()
-                // ]
+                'meta' => $isPaginated ? [
+                    'current_page' => $stories->currentPage(),
+                    'last_page' => $stories->lastPage(),
+                    'per_page' => $stories->perPage(),
+                    'total' => $stories->total()
+                ] : null
             ], 200);
         } catch (\Exception $e) {
             Log::error('Story Index Error', [
@@ -201,7 +205,7 @@ class StoryController extends Controller
                 ]
             ], 201);
         } catch (\Exception $e) {
-            Log::error( 'Story Store Error', [
+            Log::error('Story Store Error', [
                 'message' => $e->getMessage(),
                 'trace' => $e->getTraceAsString(),
             ]);
@@ -348,7 +352,7 @@ class StoryController extends Controller
                 'message' => $e->getMessage(),
                 'trace' => $e->getTraceAsString(),
             ]);
-            
+
             return response()->json([
                 'message' => 'An error occurred while updating the story',
                 'error' => $e->getMessage()
