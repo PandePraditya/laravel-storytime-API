@@ -78,13 +78,17 @@ class StoryController extends Controller
             }
             // /api/stories?sort_by=popular&category=fiction
 
-            // Paginate when key is present
-            if ($request->has('per_page')) {
-                $isPaginated = $request->input('per_page', 10);
-                $stories = $query->paginate($isPaginated);
+            // Check if pagination is requested
+            $isPaginated = $request->has('per_page');
+
+            // Get the stories
+            if ($isPaginated) {
+                $perPage = $request->input('per_page', 10);
+                $stories = $query->paginate($perPage);
             } else {
                 $stories = $query->get();
             }
+
 
             // Format the stories
             $formattedStories = $stories->map(function ($story) use ($userId) {
