@@ -18,7 +18,11 @@ class StoryController extends Controller
     public function index(Request $request)
     {
         try {
-            $userId = auth('sanctum')->id(); // Get authenticated user's ID or null if not authenticated
+            /* 
+            * Get authenticated user's ID or null if not authenticated
+            * Will be use to check if the user has bookmarked the story 
+            */
+            $userId = auth('sanctum')->id() ?? null;
 
             $query = Story::with(['user', 'category'])
                 ->select('id', 'title', 'content', 'content_images', 'user_id', 'category_id', 'created_at');
@@ -45,14 +49,21 @@ class StoryController extends Controller
                 });
             }
 
-            // Sorting
+            // Sorting default to newest
             $sortKey = $request->input('sort_by', 'newest');
 
-            // Add more sorting options as needed
+            /* 
+            * Sorting options: 
+            * - popular: Sort by number of bookmarks
+            * - newest: Sort by creation date (default)
+            * - a-z: Sort alphabetically A-Z
+            * - z-a: Sort alphabetically Z-A
+            * Add more sorting options as needed 
+            */
             switch ($sortKey) {
                 case 'popular':
-                    $query->withCount('bookmarks') // withCount means counting each items bookmarks
-                        ->orderBy('bookmarks_count', 'desc'); // Order by number of bookmarks
+                    $query->withCount('bookmarks') // Count bookmarks for each item
+                        ->orderBy('bookmarks_count', 'desc'); // Sort by bookmark count (highest first)
                     break;
                 case 'a-z':
                     $query->orderBy('title', 'asc');
@@ -65,14 +76,17 @@ class StoryController extends Controller
                     $query->orderBy('created_at', 'desc');
                     break;
             }
-
             // /api/stories?sort_by=popular&category=fiction
 
-            // Pagination
-            // $perPage = $request->input('per_page', 10);
-            // $stories = $query->paginate($perPage);
-            $stories = $query->get();
+            // Paginate when key is present
+            if ($request->has('per_page')) {
+                $perPage = $request->input('per_page', 10);
+                $stories = $query->paginate($perPage);
+            } else {
+                $stories = $query->get();
+            }
 
+            // Format the stories
             $formattedStories = $stories->map(function ($story) use ($userId) {
                 // Get the user's name, or 'Unknown User' if no data
                 $userName = $story->user ? $story->user->name : 'Unknown User';
@@ -168,6 +182,17 @@ class StoryController extends Controller
                 'user_id' => auth()->id()
             ]);
 
+            // Log story creation
+            Log::info('Story created successfully', [
+                'id' => $story->id,
+                'title' => $story->title,
+                'content' => $story->content,
+                'content_images' => $story->content_images,
+                'category_id' => $story->category_id,
+                'user_id' => $story->user_id
+            ]);
+
+            // Return response
             return response()->json([
                 'message' => 'Story created successfully',
                 'data' => [
@@ -176,7 +201,10 @@ class StoryController extends Controller
                 ]
             ], 201);
         } catch (\Exception $e) {
-            Log::error('Story Creation Error: ' . $e->getMessage());
+            Log::error( 'Story Store Error', [
+                'message' => $e->getMessage(),
+                'trace' => $e->getTraceAsString(),
+            ]);
 
             return response()->json([
                 'message' => 'An error occurred while creating the story',
@@ -191,18 +219,33 @@ class StoryController extends Controller
             $story = Story::with(['user', 'category'])->findOrFail($id);
 
             $userName = $story->user ? $story->user->name : 'Unknown User';
+            $profileImage = $story->user && $story->user->profile_image
+                ? asset('storage/' . $story->user->profile_image)
+                : null;
 
+            // Ensure content_images is an array
             $imagePaths = is_string($story->content_images)
-                ? json_decode($story->content_images)
+                ? json_decode($story->content_images, true) // Ensure associative array
                 : $story->content_images;
 
-            $content_images = array_map(function ($image, $key) {
+            // Use collect() and map() for better handling of array data
+            $content_images = collect($imagePaths)->map(function ($image, $key) {
                 return [
                     'id' => is_array($image) && isset($image['id']) ? $image['id'] : $key + 1,
-                    'url' => is_array($image) && isset($image['url'])
-                        ? $image['url'] : (is_string($image) ? $image : ''),
+                    'url' => is_array($image) && isset($image['url']) ? $image['url'] : (is_string($image) ? $image : ''),
                 ];
-            }, $imagePaths, array_keys($imagePaths));
+            })->all(); // Convert back to array
+
+            // Log the successful fetch
+            Log::info('Story fetched successfully', [
+                'id' => $story->id,
+                'title' => $story->title,
+                'content' => $story->content,
+                'content_images' => $content_images,
+                'user_id' => $story->user_id->name,
+                'category_id' => $story->category_id->name,
+                'created_at' => $story->created_at ? $story->created_at->format('Y-m-d') : null,
+            ]);
 
             return response()->json([
                 'data' => [
@@ -212,9 +255,7 @@ class StoryController extends Controller
                     'content_images' => $content_images,
                     'user' => [
                         'name' => $userName,
-                        'profile_image' => $story->user->profile_image
-                            ? asset('storage/' . $story->user->profile_image)
-                            : null
+                        'profile_image' => $profileImage
                     ],
                     'category' => [
                         'id' => $story->category_id,
@@ -224,7 +265,10 @@ class StoryController extends Controller
                 ]
             ], 200);
         } catch (\Exception $e) {
-            Log::error('Story Fetch Error: ' . $e->getMessage());
+            Log::error('Story Fetch Error: ', [
+                'message' => $e->getMessage(),
+                'trace' => $e->getTraceAsString(),
+            ]);
 
             return response()->json([
                 'message' => 'Story not found or an error occurred',
@@ -232,6 +276,7 @@ class StoryController extends Controller
             ], 404);
         }
     }
+
 
     public function update(StoryUpdateRequest $request, string $id)
     {
@@ -299,7 +344,11 @@ class StoryController extends Controller
                 ]
             ], 200);
         } catch (\Exception $e) {
-            Log::error('Story Update Error: ' . $e->getMessage());
+            Log::error('Story Update Error: ', [
+                'message' => $e->getMessage(),
+                'trace' => $e->getTraceAsString(),
+            ]);
+            
             return response()->json([
                 'message' => 'An error occurred while updating the story',
                 'error' => $e->getMessage()
@@ -364,7 +413,10 @@ class StoryController extends Controller
             ], 200);
         } catch (\Exception $e) {
             // Catch any exception and log it for debugging
-            Log::error('Error deleting story with ID ' . $id . ': ' . $e->getMessage());
+            Log::error('Error deleting story with ID ' . $id . ': ', [
+                'message' => $e->getMessage(),
+                'trace' => $e->getTraceAsString(),
+            ]);
 
             // Return a response with a 500 Internal Server Error status
             return response()->json([

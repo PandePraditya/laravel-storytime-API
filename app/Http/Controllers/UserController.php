@@ -252,7 +252,7 @@ class UserController extends Controller
                 'data' => $formattedStories
             ], 200);
         } catch (\Exception $e) {
-            Log::error('User Stories Error', [
+            Log::error('User Stories Error: ', [
                 'message' => $e->getMessage(),
                 'trace' => $e->getTraceAsString()
             ]);
