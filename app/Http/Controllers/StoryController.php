@@ -250,8 +250,8 @@ class StoryController extends Controller
                 'title' => $story->title,
                 'content' => $story->content,
                 'content_images' => $content_images,
-                'user_id' => $story->user_id->name,
-                'category_id' => $story->category_id->name,
+                'user_id' => $story->user_id,
+                'category_name' => $story->category ? $story->category->name : 'Uncategorized',
                 'created_at' => $story->created_at ? $story->created_at->format('Y-m-d') : null,
             ]);
 
