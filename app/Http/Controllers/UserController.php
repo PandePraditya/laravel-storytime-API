@@ -110,11 +110,29 @@ class UserController extends Controller
                 ],
             ], 201);
         } catch (ValidationException $e) {
+            // Log the validation error
+            Log::error('Validation Error updating profile: ', [
+                'errors' => $e->validator->errors(),
+                'trace' => $e->getTraceAsString()
+            ]);
+
             // Return validation errors, like missing fields
-            return response()->json(['errors' => $e->validator->errors()], 422);
+            return response()->json([
+                'message' => 'Validation error occurred while updating the profile.',
+                'errors' => $e->validator->errors()
+            ], 422);
         } catch (\Exception $e) {
             // Log the error
-            return response()->json(['message' => 'An error occurred while updating the profile.', 'error' => $e->getMessage()], 500);
+            Log::error('Error updating profile: ', [
+                'message' => $e->getMessage(),
+                'trace' => $e->getTraceAsString()
+            ]);
+
+            // Return an error response message
+            return response()->json([
+                'message' => 'An error occurred while updating the profile.', 
+                // 'error' => $e->getMessage()
+            ], 500);
         }
     }
 
@@ -152,17 +170,25 @@ class UserController extends Controller
                         'profile_image' => asset('storage/' . $user->profile_image), // Return full URL
                     ],
                 ], 201);
+            } else {
+                return response()->json([
+                    'message' => 'No image uploaded.',
+                ], 400);
             }
+        } catch (ValidationException $e) {
+            return response()->json([
+                'message' => 'Validation error occurred while updating the profile image.',
+                'errors' => $e->validator->errors()
+            ], 422);
+        } catch (\Exception $e) {
+            Log::error('Error updating profile image: ', [
+                'message' => $e->getMessage(),
+                'trace' => $e->getTraceAsString()
+            ]);
 
             return response()->json([
-                'message' => 'No image uploaded.',
-            ], 400);
-        } catch (ValidationException $e) {
-            return response()->json(['errors' => $e->validator->errors()], 422);
-        } catch (\Exception $e) {
-            return response()->json([
                 'message' => 'An error occurred while updating the profile image.',
-                'error' => $e->getMessage()
+                // 'error' => $e->getMessage()
             ], 500);
         }
     }
@@ -265,7 +291,7 @@ class UserController extends Controller
 
             return response()->json([
                 'message' => 'An error occurred while fetching user stories',
-                'error' => $e->getMessage()
+                // 'error' => $e->getMessage()
             ], 500);
         }
     }

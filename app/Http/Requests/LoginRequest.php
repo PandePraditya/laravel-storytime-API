@@ -31,6 +31,19 @@ class LoginRequest extends FormRequest
     }
 
     /**
+     * Get custom messages for validator errors.
+     *
+     * @return array<string, string>
+     */ 
+    public function messages(): array
+    {
+        return [
+            'username_or_email.required' => 'The username or email field is required.',
+            'password.required' => 'The password field is required.',
+        ];
+    }
+
+    /**
      * Handle a failed validation attempt.
      *
      * @param Validator $validator

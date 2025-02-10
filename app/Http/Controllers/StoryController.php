@@ -27,56 +27,12 @@ class StoryController extends Controller
             $query = Story::with(['user', 'category'])
                 ->select('id', 'title', 'content', 'content_images', 'user_id', 'category_id', 'created_at');
 
-            // Search functionality
-            if ($request->has('search')) {
-                $searchTerm = $request->input('search');
-                $query->where(function (Builder $q) use ($searchTerm) {
-                    $q->where('title', 'like', "%{$searchTerm}%")
-                        ->orWhere('content', 'like', "%{$searchTerm}%")
-                        ->orWhereHas('user', function (Builder $userQuery) use ($searchTerm) {
-                            $userQuery->where('name', 'like', "%{$searchTerm}%");
-                        })
-                        ->orWhereHas('category', function (Builder $categoryQuery) use ($searchTerm) {
-                            $categoryQuery->where('name', 'like', "%{$searchTerm}%");
-                        });
-                });
-            }
+            // Search functionality & category filter
+            $this->applyFilters($query, $request);
 
-            // Filtering by category
-            if ($request->has('category')) {
-                $query->whereHas('category', function (Builder $q) use ($request) {
-                    $q->where('name', $request->input('category'));
-                });
-            }
-
-            // Sorting default to newest
-            $sortKey = $request->input('sort_by', 'newest');
-
-            /* 
-            * Sorting options: 
-            * - popular: Sort by number of bookmarks
-            * - newest: Sort by creation date (default)
-            * - a-z: Sort alphabetically A-Z
-            * - z-a: Sort alphabetically Z-A
-            * Add more sorting options as needed 
-            */
-            switch ($sortKey) {
-                case 'popular':
-                    $query->withCount('bookmarks') // Count bookmarks for each item
-                        ->orderBy('bookmarks_count', 'desc'); // Sort by bookmark count (highest first)
-                    break;
-                case 'a-z':
-                    $query->orderBy('title', 'asc');
-                    break;
-                case 'z-a':
-                    $query->orderBy('title', 'desc');
-                    break;
-                case 'newest':
-                default:
-                    $query->orderBy('created_at', 'desc');
-                    break;
-            }
-            // /api/stories?sort_by=popular&category=fiction
+            // Sorting functionality with newest as default
+            $this->applySorting($query, $request);
+            // /api/stories?sort_by=popular&category=fiction&search=lorem
 
             // Check if pagination is requested
             $isPaginated = $request->has('per_page');
@@ -88,7 +44,6 @@ class StoryController extends Controller
             } else {
                 $stories = $query->get();
             }
-
 
             // Format the stories
             $formattedStories = $stories->map(function ($story) use ($userId) {
@@ -140,6 +95,11 @@ class StoryController extends Controller
                 ];
             });
 
+            // Log the data
+            Log::info('Story fetch successfully: ', [
+                'stories' => $formattedStories,
+            ]);
+
             /* 
             * Return the formatted stories
             * Include pagination meta if paginated
@@ -163,6 +123,65 @@ class StoryController extends Controller
                 'message' => 'An error occurred while fetching stories',
                 'error' => $e->getMessage()
             ], 500);
+        }
+    }
+
+    /** 
+     * Apply Filters to the query based on the request
+     * @param Builder $query as the query builder instance
+     * @param Request $request as the request object
+     * fn is shorthand for a closure function or arrow function, ex: instead of function($q) { ... } use
+     */
+    private function applyFilters(Builder $query, Request $request)
+    {
+        if ($request->has('search')) {
+            $searchTerm = $request->input('search');
+            $query->where(function (Builder $q) use ($searchTerm) {
+                $q->where('title', 'like', "%{$searchTerm}%")
+                    ->orWhere('content', 'like', "%{$searchTerm}%")
+                    ->orWhereHas('user', fn($userQuery) => $userQuery->where('name', 'like', "%{$searchTerm}%"))
+                    ->orWhereHas('category', fn($categoryQuery) => $categoryQuery->where('name', 'like', "%{$searchTerm}%"));
+            });
+        }
+
+        if ($request->has('category')) {
+            $query->whereHas('category', fn($q) => $q->where('name', $request->input('category')));
+        }
+    }
+
+    /** 
+     * Apply Sorting to the query based on the request
+     * @param Builder $query as the query builder instance
+     * @param Request $request as the request object
+     * fn is shorthand for a closure function or arrow function, ex: instead of function($q) { ... } use
+     */
+    private function applySorting(Builder $query, Request $request)
+    {
+        // Default sort by creation date (newest first)
+        $sortKey = $request->input('sort_by', 'newest');
+
+        /** 
+         * Sorting options:
+         * newest: Sort by creation date (newest first)(default)
+         * popular: Sort by bookmark count (highest first)
+         * a-z: Sort alphabetically (A-Z)
+         * z-a: Sort alphabetically (Z-A)
+         */
+        switch ($sortKey) {
+            case 'popular':
+                $query->withCount('bookmarks') // Count bookmarks for each item
+                    ->orderBy('bookmarks_count', 'desc'); // Sort by bookmark count (highest first)
+                break;
+            case 'a-z':
+                $query->orderBy('title', 'asc');
+                break;
+            case 'z-a':
+                $query->orderBy('title', 'desc');
+                break;
+            case 'newest':
+            default:
+                $query->orderBy('created_at', 'desc');
+                break;
         }
     }
 
@@ -192,12 +211,7 @@ class StoryController extends Controller
 
             // Log story creation
             Log::info('Story created successfully', [
-                'id' => $story->id,
-                'title' => $story->title,
-                'content' => $story->content,
-                'content_images' => $story->content_images,
-                'category_id' => $story->category_id,
-                'user_id' => $story->user_id
+                'story' => $story->toArray(),
             ]);
 
             // Return response
@@ -243,17 +257,6 @@ class StoryController extends Controller
                     'url' => is_array($image) && isset($image['url']) ? $image['url'] : (is_string($image) ? $image : ''),
                 ];
             })->all(); // Convert back to array
-
-            // Log the successful fetch
-            Log::info('Story fetched successfully', [
-                'id' => $story->id,
-                'title' => $story->title,
-                'content' => $story->content,
-                'content_images' => $content_images,
-                'user_id' => $story->user_id,
-                'category_name' => $story->category ? $story->category->name : 'Uncategorized',
-                'created_at' => $story->created_at ? $story->created_at->format('Y-m-d') : null,
-            ]);
 
             return response()->json([
                 'data' => [
