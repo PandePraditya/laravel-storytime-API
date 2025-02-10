@@ -34,19 +34,19 @@ class BookmarkController extends Controller
             $bookmark = Bookmark::where('user_id', $userId)->where('story_id', $storyId)->first();
 
             if ($bookmark) {
-                // Remove bookmark if it exists
                 $bookmark->delete();
                 return response()->json([
                     'message' => 'Bookmark removed successfully.',
+                    'is_bookmarked' => false
                 ]);
             } else {
-                // Add bookmark if it does not exist
                 Bookmark::create([
                     'user_id' => $userId,
                     'story_id' => $storyId,
                 ]);
                 return response()->json([
                     'message' => 'Story bookmarked successfully.',
+                    'is_bookmarked' => true
                 ], 200);
             }
         } catch (\Exception $e) {
