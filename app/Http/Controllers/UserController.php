@@ -208,25 +208,6 @@ class UserController extends Controller
                 ->select('id', 'title', 'content', 'content_images', 'user_id', 'category_id', 'created_at')
                 ->where('user_id', $userId); // Fetch stories for this user only
 
-            // Search functionality
-            if ($request->has('search')) {
-                $searchTerm = $request->input('search');
-                $query->where(function (Builder $q) use ($searchTerm) {
-                    $q->where('title', 'like', "%{$searchTerm}%")
-                        ->orWhere('content', 'like', "%{$searchTerm}%")
-                        ->orWhereHas('category', function (Builder $categoryQuery) use ($searchTerm) {
-                            $categoryQuery->where('name', 'like', "%{$searchTerm}%");
-                        });
-                });
-            }
-
-            // Filtering by category
-            if ($request->has('category')) {
-                $query->whereHas('category', function (Builder $q) use ($request) {
-                    $q->where('name', $request->input('category'));
-                });
-            }
-
             // Sorting
             $sortBy = $request->input('sort_by', 'created_at');
             $sortOrder = $request->input('sort_order', 'desc');
