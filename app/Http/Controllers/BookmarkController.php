@@ -74,7 +74,6 @@ class BookmarkController extends Controller
 
             return response()->json([
                 'message' => 'An error occurred',
-                'error' => $e->getMessage()
             ], 500);
         }
     }
@@ -141,7 +140,6 @@ class BookmarkController extends Controller
 
             return response()->json([
                 'message' => 'An error occurred while fetching bookmarks',
-                'error' => $e->getMessage()
             ], 500);
         }
     }

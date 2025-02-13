@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\Category;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Log;
 
 class CategoryController extends Controller
 {
@@ -24,10 +25,15 @@ class CategoryController extends Controller
                 'message' => 'Category list fetched successfully',
             ], 200);
         } catch (\Exception $e) {
+            // Log the error
+            Log::error('Error fetching category list: ', [
+                'message' => $e->getMessage(),
+                'trace' => $e->getTraceAsString()
+            ]);
+
             // Return an error response if an exception occurs
             return response()->json([
                 'message' => 'An error occurred while fetching category list',
-                'error' => $e->getMessage(),
             ], 500);
         }
     }

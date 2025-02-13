@@ -7,6 +7,7 @@ use App\Http\Requests\RegisterRequest;
 use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Validation\ValidationException;
 
 class AuthController extends Controller
@@ -31,9 +32,14 @@ class AuthController extends Controller
                 'token' => $token
             ], 201);
         } catch (\Exception $e) {
+            // Log the error
+            Log::error('Registration error: ', [
+                'message' => $e->getMessage(),
+                'trace' => $e->getTraceAsString()
+            ]);
+
             return response()->json([
                 'message' => 'An error occurred while registering the user.',
-                'error' => $e->getMessage()
             ], 500);
         }
     }
@@ -57,7 +63,7 @@ class AuthController extends Controller
                 ], 401);
             }
 
-            // Create a token for the user
+            // Create a token for the user using sanctum
             $token = $user->createToken('Token')->plainTextToken;
 
             return response()->json([
@@ -66,9 +72,14 @@ class AuthController extends Controller
                 'token' => $token
             ]);
         } catch (\Exception $e) {
+            // Log the error
+            Log::error('Login error: ', [
+                'message' => $e->getMessage(),
+                'trace' => $e->getTraceAsString()
+            ]);
+
             return response()->json([
                 'message' => 'An error occurred while logging in.',
-                'error' => $e->getMessage()
             ], 500);
         }
     }
@@ -83,7 +94,7 @@ class AuthController extends Controller
             // Check if the token is provided
             if (!$token) {
                 return response()->json([
-                    'message' => 'Sorry, you must provide login token first.',
+                    'message' => 'Sorry, you must login first.',
                 ], 400);
             }
 
@@ -92,6 +103,7 @@ class AuthController extends Controller
                 $query->where('id', $token);
             })->first();
 
+            // If user doesnt exist then return an invalid user.
             if (!$user) {
                 return response()->json([
                     'message' => 'Unauthorized. Token is invalid or user not found.'
@@ -105,9 +117,14 @@ class AuthController extends Controller
                 'message' => 'Logged out successfully.'
             ]);
         } catch (\Exception $e) {
+            // Log the error
+            Log::error('Logout error: ', [
+                'message' => $e->getMessage(),
+                'trace' => $e->getTraceAsString()
+            ]);
+
             return response()->json([
                 'message' => 'An error occurred while logging out.',
-                'error' => $e->getMessage()
             ], 500);
         }
     }

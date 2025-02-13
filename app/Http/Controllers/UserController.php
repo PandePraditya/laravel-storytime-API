@@ -36,8 +36,13 @@ class UserController extends Controller
                 ],
             ], 201);
         } catch (\Exception $e) {
+            // Log the error
+            Log::error('User Details Error: ', [
+                'message' => $e->getMessage(),
+                'trace' => $e->getTraceAsString()
+            ]);
+
             return response()->json([
-                'errors' => $e->getMessage(),
                 'message' => 'An error occurred while fetching user details.',
             ], 500);
         }
