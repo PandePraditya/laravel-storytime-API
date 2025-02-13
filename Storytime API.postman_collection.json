@@ -1,0 +1,865 @@
+{
+	"info": {
+		"_postman_id": "6b3cb16b-3674-4547-b4ac-c3380f268804",
+		"name": "Final Project Timedoor",
+		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
+		"_exporter_id": "35178554",
+		"_collection_link": "https://crimson-space-547132.postman.co/workspace/My-Workspace~84153afe-6581-4fe3-8ef0-7fab97f9a138/collection/35178554-6b3cb16b-3674-4547-b4ac-c3380f268804?action=share&source=collection_link&creator=35178554"
+	},
+	"item": [
+		{
+			"name": "Auth",
+			"item": [
+				{
+					"name": "Register",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json",
+								"type": "text"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\r\n    \"name\": \"Asena\",\r\n    \"username\": \"Asenator\",\r\n    \"email\": \"asena@gmail.com\",\r\n    \"password\": \"#senator123\",\r\n    \"password_confirmation\": \"#senator123\"\r\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{server-url}}/api/register",
+							"host": [
+								"{{server-url}}"
+							],
+							"path": [
+								"api",
+								"register"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Logout",
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "1|iS3uuH83QKVpBFa5CmPk4uFlHMLQ0UaPSFzdxS8028ab8d5d",
+									"type": "string"
+								}
+							]
+						},
+						"method": "POST",
+						"header": [],
+						"url": {
+							"raw": "{{url}}/api/logout",
+							"host": [
+								"{{url}}"
+							],
+							"path": [
+								"api",
+								"logout"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Login Asena",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json",
+								"type": "text"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\r\n    \"username_or_email\": \"asena@gmail.com\",\r\n    \"password\": \"#senator123\"\r\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{url}}/api/login",
+							"host": [
+								"{{url}}"
+							],
+							"path": [
+								"api",
+								"login"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Login Johndoe",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json",
+								"type": "text"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\r\n    \"username_or_email\": \"johndoe@gmail.com\",\r\n    \"password\": \"johndoe123#\"\r\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{url}}/api/login",
+							"host": [
+								"{{url}}"
+							],
+							"path": [
+								"api",
+								"login"
+							]
+						}
+					},
+					"response": []
+				}
+			]
+		},
+		{
+			"name": "Users",
+			"item": [
+				{
+					"name": "GetUserDetail",
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "153|XsFOMsiTrCCmKtRV5jHFRvQ965yzjg1wV34dEooccec6f0d7",
+									"type": "string"
+								}
+							]
+						},
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{url}}/api/user/details",
+							"host": [
+								"{{url}}"
+							],
+							"path": [
+								"api",
+								"user",
+								"details"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Update Profile",
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "153|XsFOMsiTrCCmKtRV5jHFRvQ965yzjg1wV34dEooccec6f0d7",
+									"type": "string"
+								}
+							]
+						},
+						"method": "PUT",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "multipart/form-data",
+								"type": "text",
+								"disabled": true
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\r\n    \"name\": \"Anggsena\",\r\n    \"about\": \"lorem ipsum\",\r\n    \"old_password\": \"senator123#\",\r\n    \"new_password\": \"#senator123\",\r\n    \"new_password_confirmation\": \"#senator123\"\r\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{url}}/api/user/update-profile",
+							"host": [
+								"{{url}}"
+							],
+							"path": [
+								"api",
+								"user",
+								"update-profile"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Image Upload",
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "105|aXARlIUkLe4RCxjh0LHpaxS5RyZqJLo9Q6U9bUkMe43f50c4",
+									"type": "string"
+								}
+							]
+						},
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "multipart/form-data",
+								"type": "text"
+							}
+						],
+						"body": {
+							"mode": "formdata",
+							"formdata": [
+								{
+									"key": "profile_image",
+									"type": "file",
+									"src": "/D:/Picture from 2024/Gif For discord/big-chungus-dperdv95gwfk531e.jpg"
+								}
+							]
+						},
+						"url": {
+							"raw": "{{url}}/api/user/update-profile-image",
+							"host": [
+								"{{url}}"
+							],
+							"path": [
+								"api",
+								"user",
+								"update-profile-image"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Story By User",
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "153|XsFOMsiTrCCmKtRV5jHFRvQ965yzjg1wV34dEooccec6f0d7",
+									"type": "string"
+								}
+							]
+						},
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{url}}/api/user/stories",
+							"host": [
+								"{{url}}"
+							],
+							"path": [
+								"api",
+								"user",
+								"stories"
+							]
+						}
+					},
+					"response": []
+				}
+			]
+		},
+		{
+			"name": "Story",
+			"item": [
+				{
+					"name": "SortBy",
+					"item": [
+						{
+							"name": "Sort By Popular",
+							"request": {
+								"method": "GET",
+								"header": [],
+								"url": {
+									"raw": "{{url}}/api/stories?sort_by=",
+									"host": [
+										"{{url}}"
+									],
+									"path": [
+										"api",
+										"stories"
+									],
+									"query": [
+										{
+											"key": "sort_by",
+											"value": ""
+										}
+									]
+								}
+							},
+							"response": []
+						},
+						{
+							"name": "Sort By A-Z",
+							"request": {
+								"method": "GET",
+								"header": [],
+								"url": {
+									"raw": "{{url}}/api/stories?sort_by=a-z",
+									"host": [
+										"{{url}}"
+									],
+									"path": [
+										"api",
+										"stories"
+									],
+									"query": [
+										{
+											"key": "sort_by",
+											"value": "a-z"
+										}
+									]
+								}
+							},
+							"response": []
+						},
+						{
+							"name": "Sort By Z-A",
+							"request": {
+								"method": "GET",
+								"header": [],
+								"url": {
+									"raw": "{{url}}/api/stories?sort_by=a-z",
+									"host": [
+										"{{url}}"
+									],
+									"path": [
+										"api",
+										"stories"
+									],
+									"query": [
+										{
+											"key": "sort_by",
+											"value": "a-z"
+										}
+									]
+								}
+							},
+							"response": []
+						},
+						{
+							"name": "Sort By Newest",
+							"request": {
+								"method": "GET",
+								"header": [],
+								"url": {
+									"raw": "{{url}}/api/stories?sort_by=newest",
+									"host": [
+										"{{url}}"
+									],
+									"path": [
+										"api",
+										"stories"
+									],
+									"query": [
+										{
+											"key": "sort_by",
+											"value": "newest"
+										}
+									]
+								}
+							},
+							"response": []
+						}
+					]
+				},
+				{
+					"name": "Get Story",
+					"protocolProfileBehavior": {
+						"disableBodyPruning": true
+					},
+					"request": {
+						"method": "GET",
+						"header": [],
+						"body": {
+							"mode": "formdata",
+							"formdata": []
+						},
+						"url": {
+							"raw": "{{server-url}}/api/stories?sort_by=z-a",
+							"host": [
+								"{{server-url}}"
+							],
+							"path": [
+								"api",
+								"stories"
+							],
+							"query": [
+								{
+									"key": "sort_by",
+									"value": "z-a"
+								}
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Add Story",
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "111|JdK4P8IOlOLPCVczEHau57WkrA5S9bPiiPPU9RSL9dcdfb74",
+									"type": "string"
+								}
+							]
+						},
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "multipart/form-data",
+								"type": "text"
+							}
+						],
+						"body": {
+							"mode": "formdata",
+							"formdata": [
+								{
+									"key": "title",
+									"value": "The What",
+									"type": "text"
+								},
+								{
+									"key": "content",
+									"value": "Lorem ipsum dolor sith make me a spagetti",
+									"type": "text"
+								},
+								{
+									"key": "category_id",
+									"value": "1",
+									"type": "text"
+								},
+								{
+									"key": "content_images[]",
+									"type": "file",
+									"src": [
+										"/D:/Picture from 2024/Gif For discord/big-chungus-dperdv95gwfk531e.jpg",
+										"/D:/Picture from 2024/Gif For discord/Turu cat.jpeg"
+									]
+								}
+							]
+						},
+						"url": {
+							"raw": "{{url}}/api/stories",
+							"host": [
+								"{{url}}"
+							],
+							"path": [
+								"api",
+								"stories"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Update Story Johndoe",
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "130|H4yRQPMNHbY0ndLim4N3Q543Uosv0H0DR5e27JLS3b98c0be",
+									"type": "string"
+								}
+							]
+						},
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "multipart/form-data",
+								"type": "text"
+							}
+						],
+						"body": {
+							"mode": "formdata",
+							"formdata": [
+								{
+									"key": "_method",
+									"value": "PUT",
+									"type": "text"
+								},
+								{
+									"key": "title",
+									"value": "Dr. Doom",
+									"type": "text"
+								},
+								{
+									"key": "content",
+									"value": "Ok Lorem Ipsum sith dolordsdasda",
+									"description": "Description",
+									"type": "text"
+								},
+								{
+									"key": "category_id",
+									"value": "6",
+									"type": "text"
+								},
+								{
+									"key": "content_images[]",
+									"description": "Array",
+									"type": "file",
+									"src": [
+										"/D:/Picture from 2024/Gif For discord/Turu cat.jpeg",
+										"/D:/Picture from 2024/Gif For discord/big-chungus-dperdv95gwfk531e.jpg"
+									]
+								}
+							]
+						},
+						"url": {
+							"raw": "{{url}}/api/stories/4",
+							"host": [
+								"{{url}}"
+							],
+							"path": [
+								"api",
+								"stories",
+								"4"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Update Story Asena",
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "137|YM03QdN6z9FB79MXu3SUHMbKan8hz12sAMbkkffX80013c6a",
+									"type": "string"
+								}
+							]
+						},
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "multipart/form-data",
+								"type": "text"
+							}
+						],
+						"body": {
+							"mode": "formdata",
+							"formdata": [
+								{
+									"key": "_method",
+									"value": "PUT",
+									"type": "text"
+								},
+								{
+									"key": "title",
+									"value": "Dilan",
+									"type": "text"
+								},
+								{
+									"key": "content",
+									"value": "Ok Lorem Ipsum sith dolordsdasda",
+									"description": "Description",
+									"type": "text"
+								},
+								{
+									"key": "category_id",
+									"value": "2",
+									"type": "text"
+								},
+								{
+									"key": "content_images[]",
+									"description": "Array",
+									"type": "file",
+									"src": [
+										"/D:/Picture from 2024/Gif For discord/Turu cat.jpeg",
+										"/D:/Picture from 2024/Gif For discord/big-chungus-dperdv95gwfk531e.jpg"
+									],
+									"disabled": true
+								}
+							]
+						},
+						"url": {
+							"raw": "{{url}}/api/stories/4",
+							"host": [
+								"{{url}}"
+							],
+							"path": [
+								"api",
+								"stories",
+								"4"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Show Story",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{url}}/api/stories/34",
+							"host": [
+								"{{url}}"
+							],
+							"path": [
+								"api",
+								"stories",
+								"34"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Search Stories",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{url}}/api/stories?search=Lorem",
+							"host": [
+								"{{url}}"
+							],
+							"path": [
+								"api",
+								"stories"
+							],
+							"query": [
+								{
+									"key": "search",
+									"value": "Lorem"
+								}
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Delete Story",
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "105|aXARlIUkLe4RCxjh0LHpaxS5RyZqJLo9Q6U9bUkMe43f50c4",
+									"type": "string"
+								}
+							]
+						},
+						"method": "DELETE",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{url}}/api/stories/12",
+							"host": [
+								"{{url}}"
+							],
+							"path": [
+								"api",
+								"stories",
+								"12"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "FilterByCategory",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{url}}/api/stories?category=Food & Cooking ",
+							"host": [
+								"{{url}}"
+							],
+							"path": [
+								"api",
+								"stories"
+							],
+							"query": [
+								{
+									"key": "category",
+									"value": "Food "
+								},
+								{
+									"key": " Cooking ",
+									"value": null
+								}
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Pagination Request",
+					"request": {
+						"method": "GET",
+						"header": []
+					},
+					"response": []
+				}
+			]
+		},
+		{
+			"name": "Bookmark",
+			"item": [
+				{
+					"name": "Get All Bookmarked",
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "42|X5MSuWzMK9THTdXhRyQmDyR9JP0ReRyMf6GSzQ41a354d90a",
+									"type": "string"
+								}
+							]
+						},
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{url}}/api/bookmarks",
+							"host": [
+								"{{url}}"
+							],
+							"path": [
+								"api",
+								"bookmarks"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Toggle Bookmark",
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "147|NTHmq10maKSgjoTFnSuuzsUEmmmAw1XUmuBtBvsM1ab4eefe",
+									"type": "string"
+								}
+							]
+						},
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\r\n    \"story_id\": 6\r\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{url}}/api/bookmarks/toggle",
+							"host": [
+								"{{url}}"
+							],
+							"path": [
+								"api",
+								"bookmarks",
+								"toggle"
+							]
+						}
+					},
+					"response": []
+				}
+			]
+		},
+		{
+			"name": "Categories",
+			"item": [
+				{
+					"name": "Get Categories",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{url}}/api/categories",
+							"host": [
+								"{{url}}"
+							],
+							"path": [
+								"api",
+								"categories"
+							]
+						}
+					},
+					"response": []
+				}
+			]
+		},
+		{
+			"name": "Server Health Test",
+			"request": {
+				"method": "GET",
+				"header": [],
+				"url": {
+					"raw": "{{url}}/api/health",
+					"host": [
+						"{{url}}"
+					],
+					"path": [
+						"api",
+						"health"
+					]
+				}
+			},
+			"response": []
+		}
+	]
+}
