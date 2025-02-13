@@ -85,7 +85,10 @@ class BookmarkController extends Controller
     {
         try {
             $user = $request->user();
-            $bookmarks = $user->bookmarks()->with('story.user', 'story.category')->get();
+            $bookmarks = $user->bookmarks()
+            ->with('story.user', 'story.category')
+            ->orderBy('created_at', 'desc')
+            ->get();
 
             $formattedBookmarks = $bookmarks->map(function ($bookmark) use ($user) {
                 $story = $bookmark->story;
