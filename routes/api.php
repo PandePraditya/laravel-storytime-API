@@ -55,8 +55,8 @@ Route::middleware('auth:sanctum')->group(function () {
 
     /* API routes for Stories */
     Route::apiResource('/stories', StoryController::class)->except(['index', 'show']); // Exclude Index and Show
-    // Custom Story routes
-    Route::delete('/stories/{id}/remove-image', [StoryController::class, 'removeImage']);
+    // // Custom Story routes
+    // Route::delete('/stories/{id}/remove-image', [StoryController::class, 'removeImage']);
 
     /* API routes for Bookmarks */
     // Toggle bookmark

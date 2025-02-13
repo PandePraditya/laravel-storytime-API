@@ -17,29 +17,46 @@ class BookmarkController extends Controller
     public function toggle(Request $request)
     {
         try {
+            /** 
+             * Check if the user is authenticated
+             * If not then return an error message
+             */
             if (!$request->user()) {
                 return response()->json([
                     'message' => 'You need to log in to toggle a bookmark.',
                 ], 401);
             }
 
+            // Validate if the story_id is provided
             $request->validate([
                 'story_id' => 'required|exists:stories,id',
             ]);
 
+            // Get the user_id
             $userId = $request->user()->id;
-            $storyId = $request->input('story_id');
+            // Get the story_id from the request
+            $storyId = $request->input('story_id'); 
 
-            // Check if the bookmark exists
-            $bookmark = Bookmark::where('user_id', $userId)->where('story_id', $storyId)->first();
+            // Check if the bookmark exists, where user_id and story_id match
+            $bookmark = Bookmark::where('user_id', $userId)->where('story_id', $storyId)->first() ?? null;
 
-            if ($bookmark) {
+            // Toggle bookmark
+            if ($bookmark !== null) {
+                /**
+                 * Delete the bookmark if it exists
+                 * Return a is_bookmarked value of false
+                 */
                 $bookmark->delete();
                 return response()->json([
                     'message' => 'Bookmark removed successfully.',
                     'is_bookmarked' => false
                 ]);
             } else {
+                /** 
+                 * Create a new bookmark if it doesn't exist 
+                 * With the user_id and story_id
+                 * Return a is_bookmarked value of true
+                 */ 
                 Bookmark::create([
                     'user_id' => $userId,
                     'story_id' => $storyId,
