@@ -90,16 +90,12 @@ class StoryController extends Controller
                         'id' => $story->category_id,
                         'name' => $categoryName,
                     ],
+                    'bookmarks_count' => $story->bookmarks_count ?? 0, // Include bookmark count
                     'bookmarked' => $isBookmarked, // Include bookmark status
                     'created_at' => $story->created_at ? $story->created_at->format('Y-m-d') : null,
                 ];
             });
-
-            // Log the data
-            Log::info('Story fetch successfully: ', [
-                'stories' => $formattedStories,
-            ]);
-
+            
             /* 
             * Return the formatted stories
             * Include pagination meta if paginated
