@@ -84,12 +84,17 @@ class BookmarkController extends Controller
     public function index(Request $request)
     {
         try {
+            // Get the authenticated user
             $user = $request->user();
+            // Get the per_page value from the request, default 10
+            $perPage = $request->input('per_page', 10);
+            // Get the bookmarks for the user
             $bookmarks = $user->bookmarks()
             ->with('story.user', 'story.category')
             ->orderBy('created_at', 'desc')
-            ->get();
+            ->paginate($perPage);
 
+            // Format the bookmarks
             $formattedBookmarks = $bookmarks->map(function ($bookmark) use ($user) {
                 $story = $bookmark->story;
                 $userName = $story->user ? $story->user->name : 'Unknown User';
@@ -134,6 +139,12 @@ class BookmarkController extends Controller
 
             return response()->json([
                 'data' => $formattedBookmarks,
+                'meta' => [
+                    'total' => $bookmarks->total(),
+                    'current_page' => $bookmarks->currentPage(),
+                    'per_page' => $bookmarks->perPage(),
+                    'last_page' => $bookmarks->lastPage(),
+                ],
             ], 200);
         } catch (\Exception $e) {
             Log::error('Bookmark Index Error', [
