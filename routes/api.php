@@ -23,44 +23,44 @@ use Illuminate\Support\Facades\Route;
 // });
 
 // Health check route
-Route::get('/health', function () {
+Route::get('health', function () {
     return response()->json(['message' => 'Server is running.'], 200);
 });
 
 // API routes for authentication
-Route::post('/register', [AuthController::class, 'register']);
-Route::post('/login', [AuthController::class, 'login']);
+Route::post('register', [AuthController::class, 'register']);
+Route::post('login', [AuthController::class, 'login']);
 
 // Public routes (accessible without authentication)
-Route::get('/stories', [StoryController::class, 'index']); // Public access to view stories
-Route::get('/stories/{id}', [StoryController::class, 'show']);
-Route::get('/categories', [CategoryController::class, 'index']); // Public access to categories
+Route::get('stories', [StoryController::class, 'index']); // Public access to view stories
+Route::get('stories/{id}', [StoryController::class, 'show']);
+Route::get('categories', [CategoryController::class, 'index']); // Public access to categories
 
 // Protected routes (requires authentication)
 Route::middleware('auth:sanctum')->group(function () {
-    Route::post('/logout', [AuthController::class, 'logout']);
+    Route::post('logout', [AuthController::class, 'logout']);
 
     /* API routes for user profile */
     // Getting user details
-    Route::get('/user/details', [UserController::class, 'getUserDetails']);
+    Route::get('user/details', [UserController::class, 'getUserDetails']);
 
     // Updating user profile
-    Route::put('/user/update-profile', [UserController::class, 'updateProfile']);
+    Route::put('user/update-profile', [UserController::class, 'updateProfile']);
 
     // Updating user profile image
-    Route::post('/user/update-profile-image', [UserController::class, 'updateProfileImage']);
+    Route::post('user/update-profile-image', [UserController::class, 'updateProfileImage']);
 
     // Getting stories made by the user
-    Route::get('/user/stories', [UserController::class, 'getUserStories']);
+    Route::get('user/stories', [UserController::class, 'getUserStories']);
 
     /* API routes for Stories */
-    Route::apiResource('/stories', StoryController::class)->except(['index', 'show']); // Exclude Index and Show
+    Route::apiResource('stories', StoryController::class)->except(['index', 'show']); // Exclude Index and Show
     // // Custom Story routes
     // Route::delete('/stories/{id}/remove-image', [StoryController::class, 'removeImage']);
 
     /* API routes for Bookmarks */
     // Toggle bookmark
-    Route::post('/bookmarks/toggle', [BookmarkController::class, 'toggle']);
+    Route::post('bookmarks/toggle', [BookmarkController::class, 'toggle']);
     // Get all bookmarks from the user
-    Route::get('/bookmarks', [BookmarkController::class, 'index']);
+    Route::get('bookmarks', [BookmarkController::class, 'index']);
 });
