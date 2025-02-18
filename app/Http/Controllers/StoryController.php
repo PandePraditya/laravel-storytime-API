@@ -4,7 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Http\Requests\StoryStoreRequest;
 use App\Http\Requests\StoryUpdateRequest;
-use App\Models\Bookmark;
+// use App\Models\Bookmark;
 use App\Models\Story;
 use Illuminate\Database\Eloquent\Builder;
 // use Illuminate\Database\Eloquent\ModelNotFoundException;
@@ -73,9 +73,9 @@ class StoryController extends Controller
                 }, $imagePaths, array_keys($imagePaths));
 
                 // Check if the story is bookmarked by the authenticated user
-                $isBookmarked = $userId
-                    ? Bookmark::where('story_id', $story->id)->where('user_id', $userId)->exists()
-                    : false;
+                // $isBookmarked = $userId
+                //     ? Bookmark::where('story_id', $story->id)->where('user_id', $userId)->exists()
+                //     : false;
 
                 return [
                     'id' => (string) $story->id,
@@ -91,7 +91,7 @@ class StoryController extends Controller
                         'name' => $categoryName,
                     ],
                     'bookmarks_count' => $story->bookmarks_count ?? 0, // Include bookmark count
-                    'bookmarked' => $isBookmarked, // Include bookmark status
+                    // 'bookmarked' => $isBookmarked, // Include bookmark status
                     'created_at' => $story->created_at ? $story->created_at->format('Y-m-d') : null,
                 ];
             });
@@ -117,7 +117,6 @@ class StoryController extends Controller
 
             return response()->json([
                 'message' => 'An error occurred while fetching stories',
-                'error' => $e->getMessage()
             ], 500);
         }
     }
@@ -226,7 +225,6 @@ class StoryController extends Controller
 
             return response()->json([
                 'message' => 'An error occurred while creating the story',
-                'error' => $e->getMessage()
             ], 500);
         }
     }
@@ -279,7 +277,6 @@ class StoryController extends Controller
 
             return response()->json([
                 'message' => 'Story not found or an error occurred',
-                'error' => $e->getMessage()
             ], 404);
         }
     }
@@ -358,7 +355,6 @@ class StoryController extends Controller
 
             return response()->json([
                 'message' => 'An error occurred while updating the story',
-                'error' => $e->getMessage()
             ], 500);
         }
     }
@@ -428,59 +424,7 @@ class StoryController extends Controller
             // Return a response with a 500 Internal Server Error status
             return response()->json([
                 'message' => 'An error occurred while deleting the story.',
-                'error' => $e->getMessage(),
             ], 500);
         }
     }
-
-    // Remove an image when editing the story, while not deleting the story
-    // public function removeImage(Request $request, string $id)
-    // {
-    //     try {
-    //         $validatedData = $request->validate([
-    //             'image_id' => 'required|integer'
-    //         ]);
-
-    //         $story = Story::findOrFail($id);
-
-    //         // Find the image to be removed
-    //         $imageToRemove = collect($story->content_images)->firstWhere('id', $validatedData['image_id']);
-
-    //         if (!$imageToRemove) {
-    //             return response()->json([
-    //                 'message' => 'Image not found'
-    //             ], 404);
-    //         }
-
-    //         // Extract the relative path from the full URL
-    //         $relativePath = str_replace(asset('storage/') . '/', '', $imageToRemove['url']);
-
-    //         // Remove the image from storage
-    //         if (Storage::disk('public')->exists($relativePath)) {
-    //             Storage::disk('public')->delete($relativePath);
-    //         }
-
-    //         // Remove the image from the content_images array
-    //         $updatedImages = array_values(array_filter($story->content_images, function ($image) use ($validatedData) {
-    //             return $image['id'] !== $validatedData['image_id'];
-    //         }));
-
-    //         // Update the story with the remaining images
-    //         $story->update([
-    //             'content_images' => $updatedImages
-    //         ]);
-
-    //         return response()->json([
-    //             'message' => 'Image removed successfully',
-    //             'data' => $story
-    //         ], 200);
-    //     } catch (\Exception $e) {
-    //         Log::error('Image Removal Error: ' . $e->getMessage());
-
-    //         return response()->json([
-    //             'message' => 'An error occurred while removing the image',
-    //             'error' => $e->getMessage()
-    //         ], 500);
-    //     }
-    // }
 }
