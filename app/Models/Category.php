@@ -13,6 +13,7 @@ class Category extends Model
         'name',
     ];
 
+    // Relationship to stories (one-to-many)
     public function stories() {
         return $this->hasMany(Story::class);
     }

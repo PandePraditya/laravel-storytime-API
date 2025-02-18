@@ -14,10 +14,12 @@ class Bookmark extends Model
         'story_id',
     ];
 
+    // Relationship to user (many-to-one)
     public function user() {
         return $this->belongsTo(User::class);
     }
 
+    // Relationship to story (many-to-one)
     public function story() {
         return $this->belongsTo(Story::class);
     }

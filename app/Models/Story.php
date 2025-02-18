@@ -25,21 +25,25 @@ class Story extends Model
         'created_at' => 'datetime',
     ];
 
+    // Relationship to user (many-to-one)
     public function user()
     {
         return $this->belongsTo(User::class);
     }
 
+    // Relationship to category (many-to-one)
     public function category()
     {
         return $this->belongsTo(Category::class);
     }
 
+    // Relationship to bookmarks (one-to-many)
     public function bookmarks()
     {
         return $this->hasMany(Bookmark::class);
     }
 
+    // Relationship to users who bookmarked the story (many-to-many)
     public function bookmarkedByUsers()
     {
         return $this->belongsToMany(User::class, 'bookmarks', 'story_id', 'user_id');
