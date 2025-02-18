@@ -4,7 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Http\Requests\StoryStoreRequest;
 use App\Http\Requests\StoryUpdateRequest;
-// use App\Models\Bookmark;
+use App\Models\Bookmark;
 use App\Models\Story;
 use Illuminate\Database\Eloquent\Builder;
 // use Illuminate\Database\Eloquent\ModelNotFoundException;
@@ -73,9 +73,9 @@ class StoryController extends Controller
                 }, $imagePaths, array_keys($imagePaths));
 
                 // Check if the story is bookmarked by the authenticated user
-                // $isBookmarked = $userId
-                //     ? Bookmark::where('story_id', $story->id)->where('user_id', $userId)->exists()
-                //     : false;
+                $isBookmarked = $userId
+                    ? Bookmark::where('story_id', $story->id)->where('user_id', $userId)->exists()
+                    : false;
 
                 return [
                     'id' => (string) $story->id,
@@ -91,7 +91,7 @@ class StoryController extends Controller
                         'name' => $categoryName,
                     ],
                     'bookmarks_count' => $story->bookmarks_count ?? 0, // Include bookmark count
-                    // 'bookmarked' => $isBookmarked, // Include bookmark status
+                    'bookmarked' => $isBookmarked, // Include bookmark status
                     'created_at' => $story->created_at ? $story->created_at->format('Y-m-d') : null,
                 ];
             });
