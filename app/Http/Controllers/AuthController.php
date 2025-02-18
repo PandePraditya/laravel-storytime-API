@@ -110,8 +110,8 @@ class AuthController extends Controller
                 ], 401);
             }
 
-            // Revoke all tokens for the user
-            $user->tokens()->delete();
+            // Revoke only the current token
+            $user->currentAccessToken()->delete();
 
             return response()->json([
                 'message' => 'Logged out successfully.'
