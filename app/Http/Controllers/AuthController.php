@@ -98,20 +98,20 @@ class AuthController extends Controller
                 ], 400);
             }
 
-            // Find the user associated with the token
-            $user = User::whereHas('tokens', function ($query) use ($token) {
-                $query->where('id', $token);
-            })->first();
+            // Get the authenticated user using Sanctum
+            $user = $request->user();
 
-            // If user doesnt exist then return an invalid user.
+            // If user isn't authenticated, return unauthorized
             if (!$user) {
                 return response()->json([
-                    'message' => 'Unauthorized. Token is invalid or user not found.'
+                    'message' => 'Unauthorized. Token is invalid or user not found.',
                 ], 401);
             }
 
-            // Revoke only the current token
-            $user->currentAccessToken()->delete();
+            // Revoke the current token
+            if ($request->user()->tokens()->where('id', $request->user()->currentAccessToken()->id)->exists()) {
+                $request->user()->currentAccessToken()->delete();
+            }
 
             return response()->json([
                 'message' => 'Logged out successfully.'
