@@ -133,7 +133,6 @@ class StoryController extends Controller
             $searchTerm = $request->input('search');
             $query->where(function (Builder $q) use ($searchTerm) {
                 $q->where('title', 'like', "%{$searchTerm}%")
-                    ->orWhere('content', 'like', "%{$searchTerm}%")
                     ->orWhereHas('user', fn($userQuery) => $userQuery->where('name', 'like', "%{$searchTerm}%"))
                     ->orWhereHas('category', fn($categoryQuery) => $categoryQuery->where('name', 'like', "%{$searchTerm}%"));
             });
@@ -148,7 +147,6 @@ class StoryController extends Controller
      * Apply Sorting to the query based on the request
      * @param Builder $query as the query builder instance
      * @param Request $request as the request object
-     * fn is shorthand for a closure function or arrow function, ex: instead of function($q) { ... } use
      */
     private function applySorting(Builder $query, Request $request)
     {
