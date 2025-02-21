@@ -13,17 +13,20 @@
 				{
 					"name": "Register",
 					"request": {
+						"auth": {
+							"type": "noauth"
+						},
 						"method": "POST",
 						"header": [
 							{
-								"key": "Content-Type",
+								"key": "Accept",
 								"value": "application/json",
 								"type": "text"
 							}
 						],
 						"body": {
 							"mode": "raw",
-							"raw": "{\r\n    \"name\": \"Asena\",\r\n    \"username\": \"Asenator\",\r\n    \"email\": \"asena@gmail.com\",\r\n    \"password\": \"#senator123\",\r\n    \"password_confirmation\": \"#senator123\"\r\n}",
+							"raw": "{\r\n    \"name\": \"Homer\",\r\n    \"username\": \"Homer\",\r\n    \"email\": \"homer@gmail.com\",\r\n    \"password\": \"#homer123\",\r\n    \"password_confirmation\": \"#homer\"\r\n}",
 							"options": {
 								"raw": {
 									"language": "json"
@@ -31,9 +34,9 @@
 							}
 						},
 						"url": {
-							"raw": "{{server-url}}/api/register",
+							"raw": "{{url}}/api/register",
 							"host": [
-								"{{server-url}}"
+								"{{url}}"
 							],
 							"path": [
 								"api",
@@ -46,22 +49,12 @@
 				{
 					"name": "Logout",
 					"request": {
-						"auth": {
-							"type": "bearer",
-							"bearer": [
-								{
-									"key": "token",
-									"value": "1|iS3uuH83QKVpBFa5CmPk4uFlHMLQ0UaPSFzdxS8028ab8d5d",
-									"type": "string"
-								}
-							]
-						},
 						"method": "POST",
 						"header": [],
 						"url": {
-							"raw": "{{url}}/api/logout",
+							"raw": "{{server-url}}/api/logout",
 							"host": [
-								"{{url}}"
+								"{{server-url}}"
 							],
 							"path": [
 								"api",
@@ -74,6 +67,9 @@
 				{
 					"name": "Login Asena",
 					"request": {
+						"auth": {
+							"type": "noauth"
+						},
 						"method": "POST",
 						"header": [
 							{
@@ -107,6 +103,9 @@
 				{
 					"name": "Login Johndoe",
 					"request": {
+						"auth": {
+							"type": "noauth"
+						},
 						"method": "POST",
 						"header": [
 							{
@@ -125,9 +124,9 @@
 							}
 						},
 						"url": {
-							"raw": "{{url}}/api/login",
+							"raw": "{{server-url}}/api/login",
 							"host": [
-								"{{url}}"
+								"{{server-url}}"
 							],
 							"path": [
 								"api",
@@ -145,16 +144,6 @@
 				{
 					"name": "GetUserDetail",
 					"request": {
-						"auth": {
-							"type": "bearer",
-							"bearer": [
-								{
-									"key": "token",
-									"value": "153|XsFOMsiTrCCmKtRV5jHFRvQ965yzjg1wV34dEooccec6f0d7",
-									"type": "string"
-								}
-							]
-						},
 						"method": "GET",
 						"header": [],
 						"url": {
@@ -179,7 +168,7 @@
 							"bearer": [
 								{
 									"key": "token",
-									"value": "153|XsFOMsiTrCCmKtRV5jHFRvQ965yzjg1wV34dEooccec6f0d7",
+									"value": "125|OwefQBC6aklgQ16CQVB2SolNPhHbVv260Pjl14jN5de20d5e",
 									"type": "string"
 								}
 							]
@@ -195,7 +184,7 @@
 						],
 						"body": {
 							"mode": "raw",
-							"raw": "{\r\n    \"name\": \"Anggsena\",\r\n    \"about\": \"lorem ipsum\",\r\n    \"old_password\": \"senator123#\",\r\n    \"new_password\": \"#senator123\",\r\n    \"new_password_confirmation\": \"#senator123\"\r\n}",
+							"raw": "{\r\n    \"name\": \"John Doe\",\r\n    \"about\": \"lorem ipsum\",\r\n    \"old_password\": \"#johndoe123\",\r\n    \"new_password\": \"johndoe123#\",\r\n    \"new_password_confirmation\": \"johndoe123\"\r\n}",
 							"options": {
 								"raw": {
 									"language": "json"
@@ -203,9 +192,9 @@
 							}
 						},
 						"url": {
-							"raw": "{{url}}/api/user/update-profile",
+							"raw": "{{server-url}}/api/user/update-profile",
 							"host": [
-								"{{url}}"
+								"{{server-url}}"
 							],
 							"path": [
 								"api",
@@ -262,14 +251,14 @@
 					"response": []
 				},
 				{
-					"name": "Story By User",
+					"name": "Stories By User",
 					"request": {
 						"auth": {
 							"type": "bearer",
 							"bearer": [
 								{
 									"key": "token",
-									"value": "153|XsFOMsiTrCCmKtRV5jHFRvQ965yzjg1wV34dEooccec6f0d7",
+									"value": "125|OwefQBC6aklgQ16CQVB2SolNPhHbVv260Pjl14jN5de20d5e",
 									"type": "string"
 								}
 							]
@@ -277,9 +266,9 @@
 						"method": "GET",
 						"header": [],
 						"url": {
-							"raw": "{{url}}/api/user/stories",
+							"raw": "{{server-url}}/api/user/stories",
 							"host": [
-								"{{url}}"
+								"{{server-url}}"
 							],
 							"path": [
 								"api",
@@ -304,9 +293,9 @@
 								"method": "GET",
 								"header": [],
 								"url": {
-									"raw": "{{url}}/api/stories?sort_by=",
+									"raw": "{{server-url}}/api/stories?sort_by=popular",
 									"host": [
-										"{{url}}"
+										"{{server-url}}"
 									],
 									"path": [
 										"api",
@@ -315,7 +304,7 @@
 									"query": [
 										{
 											"key": "sort_by",
-											"value": ""
+											"value": "popular"
 										}
 									]
 								}
@@ -328,9 +317,9 @@
 								"method": "GET",
 								"header": [],
 								"url": {
-									"raw": "{{url}}/api/stories?sort_by=a-z",
+									"raw": "{{server-url}}/api/stories?sort_by=a-z",
 									"host": [
-										"{{url}}"
+										"{{server-url}}"
 									],
 									"path": [
 										"api",
@@ -352,9 +341,9 @@
 								"method": "GET",
 								"header": [],
 								"url": {
-									"raw": "{{url}}/api/stories?sort_by=a-z",
+									"raw": "{{server-url}}/api/stories?sort_by=z-a",
 									"host": [
-										"{{url}}"
+										"{{server-url}}"
 									],
 									"path": [
 										"api",
@@ -363,7 +352,7 @@
 									"query": [
 										{
 											"key": "sort_by",
-											"value": "a-z"
+											"value": "z-a"
 										}
 									]
 								}
@@ -376,9 +365,9 @@
 								"method": "GET",
 								"header": [],
 								"url": {
-									"raw": "{{url}}/api/stories?sort_by=newest",
+									"raw": "{{server-url}}/api/stories?sort_by=newest",
 									"host": [
-										"{{url}}"
+										"{{server-url}}"
 									],
 									"path": [
 										"api",
@@ -397,7 +386,7 @@
 					]
 				},
 				{
-					"name": "Get Story",
+					"name": "Get Stories",
 					"protocolProfileBehavior": {
 						"disableBodyPruning": true
 					},
@@ -562,16 +551,6 @@
 				{
 					"name": "Update Story Asena",
 					"request": {
-						"auth": {
-							"type": "bearer",
-							"bearer": [
-								{
-									"key": "token",
-									"value": "137|YM03QdN6z9FB79MXu3SUHMbKan8hz12sAMbkkffX80013c6a",
-									"type": "string"
-								}
-							]
-						},
 						"method": "POST",
 						"header": [
 							{
@@ -590,18 +569,18 @@
 								},
 								{
 									"key": "title",
-									"value": "Dilan",
+									"value": "Ghibli Stories Vol. 2",
 									"type": "text"
 								},
 								{
 									"key": "content",
-									"value": "Ok Lorem Ipsum sith dolordsdasda",
+									"value": "Sophie, a young hatmaker, lives a quiet life in a small town until she is cursed by the jealous Witch of the Waste, transforming her into an old woman. Desperate to break the curse, Sophie seeks out the mysterious and powerful wizard Howl, whose magical, walking castle roams the land. As she becomes involved with Howl and his strange companions—Calcifer, a fire demon, and Markl, his young apprentice—Sophie uncovers Howl’s hidden heart, the realities of a devastating war, and the true nature of her own strength.",
 									"description": "Description",
 									"type": "text"
 								},
 								{
 									"key": "category_id",
-									"value": "2",
+									"value": "6",
 									"type": "text"
 								},
 								{
@@ -609,22 +588,22 @@
 									"description": "Array",
 									"type": "file",
 									"src": [
-										"/D:/Picture from 2024/Gif For discord/Turu cat.jpeg",
-										"/D:/Picture from 2024/Gif For discord/big-chungus-dperdv95gwfk531e.jpg"
-									],
-									"disabled": true
+										"/C:/Users/Asus/OneDrive/Pictures/Frontend/castle.jpeg",
+										"/C:/Users/Asus/OneDrive/Pictures/Frontend/ponyo.jpeg",
+										"/C:/Users/Asus/OneDrive/Pictures/Frontend/totoro.jpg"
+									]
 								}
 							]
 						},
 						"url": {
-							"raw": "{{url}}/api/stories/4",
+							"raw": "{{server-url}}/api/stories/73",
 							"host": [
-								"{{url}}"
+								"{{server-url}}"
 							],
 							"path": [
 								"api",
 								"stories",
-								"4"
+								"73"
 							]
 						}
 					},
@@ -655,9 +634,9 @@
 						"method": "GET",
 						"header": [],
 						"url": {
-							"raw": "{{url}}/api/stories?search=Lorem",
+							"raw": "{{server-url}}/api/stories?search=Horror",
 							"host": [
-								"{{url}}"
+								"{{server-url}}"
 							],
 							"path": [
 								"api",
@@ -666,7 +645,7 @@
 							"query": [
 								{
 									"key": "search",
-									"value": "Lorem"
+									"value": "Horror"
 								}
 							]
 						}
@@ -743,7 +722,23 @@
 					"name": "Pagination Request",
 					"request": {
 						"method": "GET",
-						"header": []
+						"header": [],
+						"url": {
+							"raw": "{{server-url}}/api/stories?per_page=10",
+							"host": [
+								"{{server-url}}"
+							],
+							"path": [
+								"api",
+								"stories"
+							],
+							"query": [
+								{
+									"key": "per_page",
+									"value": "10"
+								}
+							]
+						}
 					},
 					"response": []
 				}
@@ -755,22 +750,12 @@
 				{
 					"name": "Get All Bookmarked",
 					"request": {
-						"auth": {
-							"type": "bearer",
-							"bearer": [
-								{
-									"key": "token",
-									"value": "42|X5MSuWzMK9THTdXhRyQmDyR9JP0ReRyMf6GSzQ41a354d90a",
-									"type": "string"
-								}
-							]
-						},
 						"method": "GET",
 						"header": [],
 						"url": {
-							"raw": "{{url}}/api/bookmarks",
+							"raw": "{{server-url}}/api/bookmarks",
 							"host": [
-								"{{url}}"
+								"{{server-url}}"
 							],
 							"path": [
 								"api",
@@ -849,9 +834,9 @@
 				"method": "GET",
 				"header": [],
 				"url": {
-					"raw": "{{url}}/api/health",
+					"raw": "{{server-url}}/api/health",
 					"host": [
-						"{{url}}"
+						"{{server-url}}"
 					],
 					"path": [
 						"api",
@@ -860,6 +845,38 @@
 				}
 			},
 			"response": []
+		}
+	],
+	"auth": {
+		"type": "bearer",
+		"bearer": [
+			{
+				"key": "token",
+				"value": "160|zfKiR7gfRvU7evPzyBVdZ9s7SlA0wR6ZmEJDWDdp4f6c38af",
+				"type": "string"
+			}
+		]
+	},
+	"event": [
+		{
+			"listen": "prerequest",
+			"script": {
+				"type": "text/javascript",
+				"packages": {},
+				"exec": [
+					""
+				]
+			}
+		},
+		{
+			"listen": "test",
+			"script": {
+				"type": "text/javascript",
+				"packages": {},
+				"exec": [
+					""
+				]
+			}
 		}
 	]
 }
