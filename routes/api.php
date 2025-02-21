@@ -33,11 +33,12 @@ Route::post('login', [AuthController::class, 'login']);
 
 // Public routes (accessible without authentication)
 Route::get('stories', [StoryController::class, 'index']); // Public access to view stories
-Route::get('stories/{id}', [StoryController::class, 'show']);
+Route::get('stories/{id}', [StoryController::class, 'show']); // Public access to view a single story
 Route::get('categories', [CategoryController::class, 'index']); // Public access to categories
 
 // Protected routes (requires authentication)
 Route::middleware('auth:sanctum')->group(function () {
+    // Logout route
     Route::post('logout', [AuthController::class, 'logout']);
 
     /* API routes for user profile */
@@ -55,8 +56,6 @@ Route::middleware('auth:sanctum')->group(function () {
 
     /* API routes for Stories */
     Route::apiResource('stories', StoryController::class)->except(['index', 'show']); // Exclude Index and Show
-    // // Custom Story routes
-    // Route::delete('/stories/{id}/remove-image', [StoryController::class, 'removeImage']);
 
     /* API routes for Bookmarks */
     // Toggle bookmark

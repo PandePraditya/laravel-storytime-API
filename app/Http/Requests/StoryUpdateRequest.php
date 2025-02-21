@@ -40,27 +40,4 @@ class StoryUpdateRequest extends FormRequest
             'category_id.exists' => 'The selected category does not exist.',
         ];
     }
-
-    /**
-     * Handle a failed validation attempt.
-     *
-     * @param  \Illuminate\Contracts\Validation\Validator  $validator
-     * @return void
-     *
-     * @throws \Illuminate\Http\Exceptions\HttpResponseException
-     */
-    protected function failedValidation(Validator $validator)
-    {
-        Log::error('Validation Failed', [
-            'errors' => $validator->errors(),
-            'input' => $this->all()
-        ]);
-        // Return a JSON response with validation errors
-        throw new HttpResponseException(
-            response()->json([
-                'message' => 'Validation failed',
-                'errors' => $validator->errors()
-            ], 422)
-        );
-    }
 }

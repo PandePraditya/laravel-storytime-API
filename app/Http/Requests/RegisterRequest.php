@@ -51,19 +51,4 @@ class RegisterRequest extends FormRequest
             'username.unique' => 'The username has already been taken.',
         ];
     }
-
-    protected function failedValidation(Validator $validator)
-    {
-        Log::error('Validation Failed', [
-            'errors' => $validator->errors(),
-            'input' => $this->all()
-        ]);
-
-        throw new HttpResponseException(
-            response()->json([
-                'message' => 'Validation failed',
-                'errors' => $validator->errors()
-            ], 422) // Explicitly set the status code to 422
-        );
-    }
 }

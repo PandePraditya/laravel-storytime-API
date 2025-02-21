@@ -42,25 +42,4 @@ class LoginRequest extends FormRequest
             'password.required' => 'The password field is required.',
         ];
     }
-
-    /**
-     * Handle a failed validation attempt.
-     *
-     * @param Validator $validator
-     * @throws HttpResponseException
-     */
-    protected function failedValidation(Validator $validator)
-    {
-        Log::error('Validation Failed', [
-            'errors' => $validator->errors(),
-            'input' => $this->all()
-        ]);
-
-        throw new HttpResponseException(
-            response()->json([
-                'message' => 'Validation failed',
-                'errors' => $validator->errors()
-            ], 422)
-        );
-    }
 }

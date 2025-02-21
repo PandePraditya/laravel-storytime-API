@@ -69,25 +69,4 @@ class StoryStoreRequest extends FormRequest
             ], 401)
         );
     }
-
-    /**
-     * Handle a failed validation attempt.
-     *
-     * @param Validator $validator
-     * @throws HttpResponseException
-     */
-    protected function failedValidation(Validator $validator)
-    {
-        Log::error('Story Validation Failed', [
-            'errors' => $validator->errors(),
-            'input' => $this->all()
-        ]);
-
-        throw new HttpResponseException(
-            response()->json([
-                'message' => 'Story Validation failed',
-                'errors' => $validator->errors()
-            ], 422)
-        );
-    }
 }

@@ -17,114 +17,101 @@ class StoryController extends Controller
 {
     public function index(Request $request)
     {
-        try {
-            /* 
+        /* 
             * Get authenticated user's ID or null if not authenticated
             * Will be use to check if the user has bookmarked the story 
             */
-            $userId = auth('sanctum')->id() ?? null;
+        $userId = auth('sanctum')->id() ?? null;
 
-            $query = Story::with(['user', 'category'])
-                ->select('id', 'title', 'content', 'content_images', 'user_id', 'category_id', 'created_at');
+        $query = Story::with(['user', 'category'])
+            ->select('id', 'title', 'content', 'content_images', 'user_id', 'category_id', 'created_at');
 
-            // Search functionality & category filter
-            $this->applyFilters($query, $request);
+        // Search functionality & category filter
+        $this->applyFilters($query, $request);
 
-            // Sorting functionality with newest as default
-            $this->applySorting($query, $request);
-            // /api/stories?sort_by=popular&category=fiction&search=lorem
+        // Sorting functionality with newest as default
+        $this->applySorting($query, $request);
+        // /api/stories?sort_by=popular&category=fiction&search=lorem
 
-            // Check if pagination is requested
-            $isPaginated = $request->has('per_page');
+        // Check if pagination is requested
+        $isPaginated = $request->has('per_page');
 
-            // Get the stories
-            if ($isPaginated) {
-                $perPage = $request->input('per_page', 10);
-                $stories = $query->paginate($perPage);
-            } else {
-                $stories = $query->get();
-            }
+        // Get the stories
+        if ($isPaginated) {
+            $perPage = $request->input('per_page', 10);
+            $stories = $query->paginate($perPage);
+        } else {
+            $stories = $query->get();
+        }
 
-            // Format the stories
-            $formattedStories = $stories->map(function ($story) use ($userId) {
-                // Get the user's name, or 'Unknown User' if no data
-                $userName = $story->user ? $story->user->name : 'Unknown User';
-                // Get the category name, uncategorized if no category
-                $categoryName = $story->category ? $story->category->name : 'Uncategorized';
+        // Format the stories
+        $formattedStories = $stories->map(function ($story) use ($userId) {
+            // Get the user's name, or 'Unknown User' if no data
+            $userName = $story->user ? $story->user->name : 'Unknown User';
+            // Get the category name, uncategorized if no category
+            $categoryName = $story->category ? $story->category->name : 'Uncategorized';
 
-                // Get the user's profile picture if available, for showing the user's image of the story they made
-                $userImage = $story->user && $story->user->profile_image
-                    ? asset('storage/' . $story->user->profile_image)
-                    : null;
+            // Get the user's profile picture if available, for showing the user's image of the story they made
+            $userImage = $story->user && $story->user->profile_image
+                ? asset('storage/' . $story->user->profile_image)
+                : null;
 
-                // Convert content_images to an array if it's a string
-                $imagePaths = is_string($story->content_images)
-                    ? json_decode($story->content_images)
-                    : $story->content_images;
+            // Convert content_images to an array if it's a string
+            $imagePaths = is_string($story->content_images)
+                ? json_decode($story->content_images)
+                : $story->content_images;
 
-                // Map the image paths to a consistent format
-                $content_images = array_map(function ($image, $key) {
-                    return [
-                        'id' => is_array($image) && isset($image['id']) ? $image['id'] : $key + 1,
-                        'url' => is_array($image) && isset($image['url'])
-                            ? $image['url']
-                            : (is_string($image) ? $image : ''),
-                    ];
-                }, $imagePaths, array_keys($imagePaths));
-
-                // Check if the story is bookmarked by the authenticated user
-                $isBookmarked = $userId
-                    ? Bookmark::where('story_id', $story->id)->where('user_id', $userId)->exists()
-                    : false;
-
+            // Map the image paths to a consistent format
+            $content_images = array_map(function ($image, $key) {
                 return [
-                    'id' => (string) $story->id,
-                    'title' => $story->title,
-                    'preview_content' => Str::words($story->content, 50), // Show only 50 words
-                    'content_images' => $content_images,
-                    'user' => [
-                        'name' => $userName,
-                        'profile_image' => $userImage
-                    ],
-                    'category' => [
-                        'id' => $story->category_id,
-                        'name' => $categoryName,
-                    ],
-                    'bookmarks_count' => $story->bookmarks_count ?? 0, // Include bookmark count
-                    'bookmarked' => $isBookmarked, // Include bookmark status
-                    'created_at' => $story->created_at ? $story->created_at->format('Y-m-d') : null,
+                    'id' => is_array($image) && isset($image['id']) ? $image['id'] : $key + 1,
+                    'url' => is_array($image) && isset($image['url'])
+                        ? $image['url']
+                        : (is_string($image) ? $image : ''),
                 ];
-            });
-            
-            /* 
+            }, $imagePaths, array_keys($imagePaths));
+
+            // Check if the story is bookmarked by the authenticated user
+            $isBookmarked = $userId
+                ? Bookmark::where('story_id', $story->id)->where('user_id', $userId)->exists()
+                : false;
+
+            return [
+                'id' => (string) $story->id,
+                'title' => $story->title,
+                'preview_content' => Str::words($story->content, 50), // Show only 50 words
+                'content_images' => $content_images,
+                'user' => [
+                    'name' => $userName,
+                    'profile_image' => $userImage
+                ],
+                'category' => [
+                    'id' => $story->category_id,
+                    'name' => $categoryName,
+                ],
+                'bookmarks_count' => $story->bookmarks_count ?? 0, // Include bookmark count
+                'bookmarked' => $isBookmarked, // Include bookmark status
+                'created_at' => $story->created_at ? $story->created_at->format('Y-m-d') : null,
+            ];
+        });
+
+        /* 
             * Return the formatted stories
             * Include pagination meta if paginated
             */
-            return response()->json([
-                'data' => $formattedStories,
-                'meta' => $isPaginated ? [
-                    'current_page' => $stories->currentPage(),
-                    'last_page' => $stories->lastPage(),
-                    'per_page' => $stories->perPage(),
-                    'total' => $stories->total()
-                ] : null
-            ], 200);
-        } catch (\Exception $e) {
-            Log::error('Story Index Error', [
-                'message' => $e->getMessage(),
-                'trace' => $e->getTraceAsString()
-            ]);
-
-            return response()->json([
-                'message' => 'An error occurred while fetching stories',
-            ], 500);
-        }
+        return response()->json([
+            'data' => $formattedStories,
+            'meta' => $isPaginated ? [
+                'current_page' => $stories->currentPage(),
+                'last_page' => $stories->lastPage(),
+                'per_page' => $stories->perPage(),
+                'total' => $stories->total()
+            ] : null
+        ], 200);
     }
 
     /** 
      * Apply Filters to the query based on the request
-     * @param Builder $query as the query builder instance
-     * @param Request $request as the request object
      * fn is shorthand for a closure function or arrow function, ex: instead of function($q) { ... } use
      */
     private function applyFilters(Builder $query, Request $request)
@@ -143,11 +130,7 @@ class StoryController extends Controller
         }
     }
 
-    /** 
-     * Apply Sorting to the query based on the request
-     * @param Builder $query as the query builder instance
-     * @param Request $request as the request object
-     */
+    // Apply Sorting to the query based on the request
     private function applySorting(Builder $query, Request $request)
     {
         // Default sort by creation date (newest first)
@@ -178,251 +161,208 @@ class StoryController extends Controller
         }
     }
 
+    /**
+     * Summary of store
+     * StoryStoreRequest $request as the validated request
+     */
     public function store(StoryStoreRequest $request)
     {
-        try {
-            // Image upload logic
-            $imagePaths = [];
-            if ($request->hasFile('content_images')) {
-                foreach ($request->file('content_images') as $key => $image) {
-                    $path = $image->store('story_images', 'public');
-                    $imagePaths[] = [
-                        'id' => $key + 1,
-                        'url' => asset('storage/' . $path)
-                    ];
-                }
+        // Image upload logic
+        $imagePaths = [];
+        if ($request->hasFile('content_images')) {
+            foreach ($request->file('content_images') as $key => $image) {
+                $path = $image->store('story_images', 'public');
+                $imagePaths[] = [
+                    'id' => $key + 1,
+                    'url' => asset('storage/' . $path)
+                ];
             }
-
-            // Create story
-            $story = Story::create([
-                'title' => $request->input('title'),
-                'content' => $request->input('content'),
-                'content_images' => $imagePaths, // Store as array
-                'category_id' => $request->input('category_id'),
-                'user_id' => auth()->id()
-            ]);
-
-            // Log story creation
-            Log::info('Story created successfully', [
-                'story' => $story->toArray(),
-            ]);
-
-            // Return response
-            return response()->json([
-                'message' => 'Story created successfully',
-                'data' => [
-                    'id' => (string) $story->id, // Explicitly cast to string
-                    ...$story->toArray()
-                ]
-            ], 201);
-        } catch (\Exception $e) {
-            Log::error('Story Store Error', [
-                'message' => $e->getMessage(),
-                'trace' => $e->getTraceAsString(),
-            ]);
-
-            return response()->json([
-                'message' => 'An error occurred while creating the story',
-            ], 500);
         }
+
+        // Create story
+        $story = Story::create([
+            'title' => $request->input('title'),
+            'content' => $request->input('content'),
+            'content_images' => $imagePaths, // Store as array
+            'category_id' => $request->input('category_id'),
+            'user_id' => auth()->id()
+        ]);
+
+        // Return response
+        return response()->json([
+            'message' => 'Story created successfully',
+            'data' => [
+                'id' => (string) $story->id, // Explicitly cast to string
+                ...$story->toArray()
+            ]
+        ], 201);
     }
 
     public function show(string $id)
     {
-        try {
-            $story = Story::with(['user', 'category'])->findOrFail($id);
+        $story = Story::with(['user', 'category'])->findOrFail($id);
 
-            $userName = $story->user ? $story->user->name : 'Unknown User';
-            $profileImage = $story->user && $story->user->profile_image
-                ? asset('storage/' . $story->user->profile_image)
-                : null;
+        $userName = $story->user ? $story->user->name : 'Unknown User';
+        $profileImage = $story->user && $story->user->profile_image
+            ? asset('storage/' . $story->user->profile_image)
+            : null;
 
-            // Ensure content_images is an array
-            $imagePaths = is_string($story->content_images)
-                ? json_decode($story->content_images, true) // Ensure associative array
-                : $story->content_images;
+        // Ensure content_images is an array
+        $imagePaths = is_string($story->content_images)
+            ? json_decode($story->content_images, true) // Ensure associative array
+            : $story->content_images;
 
-            // Use collect() and map() for better handling of array data
-            $content_images = collect($imagePaths)->map(function ($image, $key) {
-                return [
-                    'id' => is_array($image) && isset($image['id']) ? $image['id'] : $key + 1,
-                    'url' => is_array($image) && isset($image['url']) ? $image['url'] : (is_string($image) ? $image : ''),
-                ];
-            })->all(); // Convert back to array
+        // Use collect() and map() for better handling of array data
+        $content_images = collect($imagePaths)->map(function ($image, $key) {
+            return [
+                'id' => is_array($image) && isset($image['id']) ? $image['id'] : $key + 1,
+                'url' => is_array($image) && isset($image['url']) ? $image['url'] : (is_string($image) ? $image : ''),
+            ];
+        })->all(); // Convert back to array
 
-            return response()->json([
-                'data' => [
-                    'id' => (string) $story->id,
-                    'title' => $story->title,
-                    'content' => $story->content,
-                    'content_images' => $content_images,
-                    'user' => [
-                        'name' => $userName,
-                        'profile_image' => $profileImage
-                    ],
-                    'category' => [
-                        'id' => $story->category_id,
-                        'name' => $story->category->name ?? 'Uncategorized',
-                    ],
-                    'created_at' => $story->created_at ? $story->created_at->format('Y-m-d') : null,
-                ]
-            ], 200);
-        } catch (\Exception $e) {
-            Log::error('Story Fetch Error: ', [
-                'message' => $e->getMessage(),
-                'trace' => $e->getTraceAsString(),
-            ]);
-
-            return response()->json([
-                'message' => 'Story not found or an error occurred',
-            ], 404);
-        }
+        return response()->json([
+            'data' => [
+                'id' => (string) $story->id,
+                'title' => $story->title,
+                'content' => $story->content,
+                'content_images' => $content_images,
+                'user' => [
+                    'name' => $userName,
+                    'profile_image' => $profileImage
+                ],
+                'category' => [
+                    'id' => $story->category_id,
+                    'name' => $story->category->name ?? 'Uncategorized',
+                ],
+                'created_at' => $story->created_at ? $story->created_at->format('Y-m-d') : null,
+            ]
+        ], 200);
     }
 
 
+    /**
+     * Summary of update
+     * StoryUpdateRequest $request as the validated request
+     */
     public function update(StoryUpdateRequest $request, string $id)
     {
-        try {
-            // Get the authenticated user's ID
-            $userId = auth('sanctum')->id();
+        // Get the authenticated user's ID
+        $userId = auth('sanctum')->id();
 
-            // Find the story by ID
-            $story = Story::findOrFail($id);
+        // Find the story by ID
+        $story = Story::findOrFail($id);
 
-            // Check if the authenticated user is the owner of the story
-            if ($story->user_id !== $userId) {
-                Log::warning('Unauthorized to update story with ID ' . $id);
-                return response()->json([
-                    'message' => 'Unauthorized to update this story'
-                ], 403);
-            }
-
-            // Validate the request
-            $validatedData = $request->validated();
-
-            // Get existing images from the story
-            $existingImages = $story->content_images ?? [];
-
-            // Get the list of existing image IDs to keep
-            $existingImageIds = $request->input('existing_images', []);
-            if (is_string($existingImageIds)) {
-                $existingImageIds = json_decode($existingImageIds, true) ?? [];
-            }
-
-            // Filter out removed images and keep only the ones that should remain
-            $remainingImages = array_filter($existingImages, function ($image) use ($existingImageIds) {
-                return in_array($image['id'], $existingImageIds);
-            });
-
-            // Handle new image uploads if any
-            $newImages = [];
-            if ($request->hasFile('content_images')) {
-                foreach ($request->file('content_images') as $key => $image) {
-                    $path = $image->store('story_images', 'public');
-                    $newImages[] = [
-                        'id' => count($remainingImages) + $key + 1, // Generate new sequential IDs
-                        'url' => asset('storage/' . $path)
-                    ];
-                }
-            }
-
-            // Combine remaining existing images with new images
-            $finalImages = array_merge($remainingImages, $newImages);
-
-            // Update the story with the new data
-            $story->update(array_merge($validatedData, [
-                'content_images' => $finalImages,
-            ]));
-
-            // Return a success response
+        // Check if the authenticated user is the owner of the story
+        if ($story->user_id !== $userId) {
+            Log::warning('Unauthorized to update story with ID ' . $id);
             return response()->json([
-                'message' => 'Story updated successfully',
-                'data' => [
-                    'id' => (string) $story->id,
-                    'title' => $story->title,
-                    'content' => $story->content,
-                    'content_images' => $story->content_images,
-                    'category_id' => $story->category_id,
-                ]
-            ], 200);
-        } catch (\Exception $e) {
-            Log::error('Story Update Error: ', [
-                'message' => $e->getMessage(),
-                'trace' => $e->getTraceAsString(),
-            ]);
-
-            return response()->json([
-                'message' => 'An error occurred while updating the story',
-            ], 500);
+                'message' => 'Unauthorized to update this story'
+            ], 403);
         }
+
+        // Validate the request
+        $validatedData = $request->validated();
+
+        // Get existing images from the story
+        $existingImages = $story->content_images ?? [];
+
+        // Get the list of existing image IDs to keep
+        $existingImageIds = $request->input('existing_images', []);
+        if (is_string($existingImageIds)) {
+            $existingImageIds = json_decode($existingImageIds, true) ?? [];
+        }
+
+        // Filter out removed images and keep only the ones that should remain
+        $remainingImages = array_filter($existingImages, function ($image) use ($existingImageIds) {
+            return in_array($image['id'], $existingImageIds);
+        });
+
+        // Handle new image uploads if any
+        $newImages = [];
+        if ($request->hasFile('content_images')) {
+            foreach ($request->file('content_images') as $key => $image) {
+                $path = $image->store('story_images', 'public');
+                $newImages[] = [
+                    'id' => count($remainingImages) + $key + 1, // Generate new sequential IDs
+                    'url' => asset('storage/' . $path)
+                ];
+            }
+        }
+
+        // Combine remaining existing images with new images
+        $finalImages = array_merge($remainingImages, $newImages);
+
+        // Update the story with the new data
+        $story->update(array_merge($validatedData, [
+            'content_images' => $finalImages,
+        ]));
+
+        // Return a success response
+        return response()->json([
+            'message' => 'Story updated successfully',
+            'data' => [
+                'id' => (string) $story->id,
+                'title' => $story->title,
+                'content' => $story->content,
+                'content_images' => $story->content_images,
+                'category_id' => $story->category_id,
+            ]
+        ], 200);
     }
 
     public function destroy(string $id)
     {
-        try {
-            // Get the authenticated user's ID
-            $userId = auth('sanctum')->id();
+        // Get the authenticated user's ID
+        $userId = auth('sanctum')->id();
 
-            // Ensure user is authenticated
-            if (!$userId) {
-                return response()->json([
-                    'message' => 'Unauthorized, please login first.',
-                ], 401);
-            }
+        // Ensure user is authenticated
+        if (!$userId) {
+            return response()->json([
+                'message' => 'Unauthorized, please login first.',
+            ], 401);
+        }
 
-            // Find the story by ID or fail
-            $story = Story::find($id); // Using find instead of findOrFail
-            if (!$story) {
-                return response()->json([
-                    'message' => 'Story not found.',
-                ], 404);
-            }
+        // Find the story by ID or fail
+        $story = Story::find($id); // Using find instead of findOrFail
+        if (!$story) {
+            return response()->json([
+                'message' => 'Story not found.',
+            ], 404);
+        }
 
-            // Check if the authenticated user is the owner of the story
-            if ($story->user_id !== $userId) {
-                return response()->json([
-                    'message' => 'Unauthorized to delete this story.',
-                ], 403);
-            }
+        // Check if the authenticated user is the owner of the story
+        if ($story->user_id !== $userId) {
+            return response()->json([
+                'message' => 'Unauthorized to delete this story.',
+            ], 403);
+        }
 
-            // Log the deletion, for debugging purposes
-            Log::info('Deleting story with ID: ' . $id);
+        // Log the deletion, for debugging purposes
+        Log::info('Deleting story with ID: ' . $id);
 
-            // Delete associated images (if any)
-            if (!empty($story->content_images)) {
-                // Ensure content_images is an array (if it's stored as an array)
-                $contentImages = is_array($story->content_images) ? $story->content_images : json_decode($story->content_images, true);
+        // Delete associated images (if any)
+        if (!empty($story->content_images)) {
+            // Ensure content_images is an array (if it's stored as an array)
+            $contentImages = is_array($story->content_images) ? $story->content_images : json_decode($story->content_images, true);
 
-                foreach ($contentImages as $image) {
-                    // Assuming image contains an 'url' field, which is the public URL
-                    // Extract the relative path for storage deletion
-                    $imagePath = str_replace(asset('storage/'), 'storage/', $image['url']);
+            foreach ($contentImages as $image) {
+                // Assuming image contains an 'url' field, which is the public URL
+                // Extract the relative path for storage deletion
+                $imagePath = str_replace(asset('storage/'), 'storage/', $image['url']);
 
-                    // Delete image from storage if it exists
-                    if (Storage::exists($imagePath)) {
-                        Storage::delete($imagePath);
-                    }
+                // Delete image from storage if it exists
+                if (Storage::exists($imagePath)) {
+                    Storage::delete($imagePath);
                 }
             }
-
-            // Delete the story
-            $story->delete();
-
-            // Return success response
-            return response()->json([
-                'message' => 'Story deleted successfully',
-            ], 200);
-        } catch (\Exception $e) {
-            // Catch any exception and log it for debugging
-            Log::error('Error deleting story with ID ' . $id . ': ', [
-                'message' => $e->getMessage(),
-                'trace' => $e->getTraceAsString(),
-            ]);
-
-            // Return a response with a 500 Internal Server Error status
-            return response()->json([
-                'message' => 'An error occurred while deleting the story.',
-            ], 500);
         }
+
+        // Delete the story
+        $story->delete();
+
+        // Return success response
+        return response()->json([
+            'message' => 'Story deleted successfully',
+        ], 200);
     }
 }
