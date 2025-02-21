@@ -28,7 +28,7 @@ class StoryStoreRequest extends FormRequest
         return [
             'title' => 'required|string|max:255',
             'content' => 'required|string',
-            'content_images' => 'sometimes|array|max:5',
+            'content_images' => 'sometimes|array|max:3',
             'content_images.*' => 'image|mimes:jpeg,png,jpg,gif|max:2048',
             'category_id' => 'required|exists:categories,id'
         ];
@@ -45,7 +45,7 @@ class StoryStoreRequest extends FormRequest
             'content.string' => 'The content must be text.',
             
             'content_images.array' => 'Images must be provided as an array.',
-            'content_images.max' => 'You cannot upload more than 5 images.',
+            'content_images.max' => 'You cannot upload more than 3 images.',
             
             'content_images.*.image' => 'File :attribute must be an image.',
             'content_images.*.mimes' => 'File :attribute must be a JPEG, PNG, JPG, or GIF.',
